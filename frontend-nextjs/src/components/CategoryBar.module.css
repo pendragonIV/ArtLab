@@ -1,0 +1,47 @@
+.categorySection {
+  padding: 40px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.categoryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #a0a0a0;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 72px;
+}
+
+.categoryCard:hover {
+  color: #ffffff;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background-color: #2b2b2b;
+  transition: all 0.2s ease;
+}
+
+.categoryCard:hover .iconWrapper {
+  background-color: #444444;
+}
+
+.categoryName {
+  font-size: 12px;
+  text-align: center;
+}

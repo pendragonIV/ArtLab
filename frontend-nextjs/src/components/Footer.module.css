@@ -1,0 +1,114 @@
+.footer {
+  background-color: #000000;
+  padding: 64px;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 48px;
+}
+
+.brandBox {
+  max-width: 300px;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--foreground);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.description {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.socials {
+  display: flex;
+  gap: 16px;
+}
+
+.socialLink {
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.socialLink:hover {
+  color: var(--foreground);
+}
+
+.linksBox {
+  display: flex;
+  gap: 80px;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.linkTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 8px;
+}
+
+.linkItem {
+  color: var(--text-muted);
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.linkItem:hover {
+  color: var(--accent);
+}
+
+.bottomBar {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.legalLinks {
+  display: flex;
+  gap: 24px;
+}
+
+.legalLink:hover {
+  color: var(--foreground);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .linksBox {
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+  .bottomBar {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}

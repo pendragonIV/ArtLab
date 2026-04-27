@@ -1,0 +1,205 @@
+.main {
+  background-color: #121212;
+  color: #FFFFFF;
+  min-height: 100vh;
+}
+
+.hero {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+}
+
+.coverImageWrapper {
+  width: 100%;
+  height: 500px;
+  position: relative;
+  background-color: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.coverImage {
+  width: 100%;
+  max-width: 1440px;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.figcaption {
+  height: 329px;
+  width: 100%;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 80px;
+}
+
+.earlyBirdBanner {
+  position: absolute;
+  top: 733px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.earlyBirdBtn {
+  background-color: #4200FF;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 20px;
+  height: 44px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.earlyBirdBtn:hover {
+  background-color: #3500CC;
+}
+
+.summarySection {
+  background-color: #000000;
+  padding: 50px 0;
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summaryContainer {
+  display: flex;
+  width: 980px;
+  justify-content: space-between;
+  align-items: stretch;
+  position: relative;
+}
+
+.detailsBox {
+  width: 490px;
+  padding-top: 52px;
+  padding-right: 80px;
+  padding-bottom: 18px;
+}
+
+.verticalDivider {
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  bottom: 22px;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+}
+
+.detailsTitle {
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 19px;
+  color: #fff;
+}
+
+.detailsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailItem {
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.priceBox {
+  width: 490px;
+  padding-top: 52px;
+  padding-left: 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.priceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  margin-bottom: 16px;
+}
+
+.priceLabel {
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+.priceValue {
+  font-size: 32px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.actionBtn {
+  background-color: #444;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 16px 0;
+  border-radius: 4px;
+  text-align: center;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.actionBtn:hover {
+  background-color: #555;
+}
+
+.article {
+  background-color: #FFFFFF;
+  color: #000000;
+  display: flex;
+  justify-content: center;
+  padding: 80px 0;
+}
+
+.articleContainer {
+  width: 980px;
+  min-height: 1000px;
+}
+
+.articleTitle {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 40px;
+  text-align: center;
+  color: #000000;
+}
+
+.curriculumGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 60px;
+}
+
+.curriculumCircle {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-color: #F0F0F0;
+  border: 1px solid #E0E0E0;
+}
