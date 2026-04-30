@@ -1,0 +1,349 @@
+.loadingScreen {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0a0a0a;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #333;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.main {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #fff;
+}
+
+/* ---- HERO BANNER ---- */
+.heroBanner {
+  background: linear-gradient(135deg, #18181b 0%, #1c1c2e 100%);
+  border-bottom: 1px solid #27272a;
+  padding: 60px 0;
+}
+
+.heroInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #6366f1;
+  object-fit: cover;
+}
+
+.adminBadge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #ef4444;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.instructorBadge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #6366f1;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.heroInfo {
+  flex: 1;
+}
+
+.heroName {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.heroEmail {
+  color: #a1a1aa;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.heroJoined {
+  color: #71717a;
+  font-size: 14px;
+}
+
+.statsRow {
+  display: flex;
+  gap: 40px;
+  margin-left: auto;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNum {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.statLabel {
+  display: block;
+  font-size: 13px;
+  color: #71717a;
+  margin-top: 2px;
+}
+
+/* ---- TAB BAR ---- */
+.tabBar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #27272a;
+  margin-top: 24px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: #a1a1aa;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 12px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: #fff;
+}
+
+.activeTab {
+  color: #fff;
+  border-bottom-color: #6366f1;
+}
+
+/* ---- CONTENT AREA ---- */
+.content {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 48px;
+}
+
+/* ---- EMPTY STATE ---- */
+.emptyState {
+  text-align: center;
+  padding: 80px 0;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.emptyState h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.emptyState p {
+  color: #a1a1aa;
+  margin-bottom: 24px;
+}
+
+.browseBtn {
+  background: #6366f1;
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.browseBtn:hover {
+  background: #4f46e5;
+}
+
+/* ---- COURSE GRID ---- */
+.courseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.courseCard {
+  background: #18181b;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #27272a;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.courseCard:hover {
+  transform: translateY(-4px);
+  border-color: #6366f1;
+}
+
+.courseThumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.courseInfo {
+  padding: 16px;
+}
+
+.courseCat {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6366f1;
+  letter-spacing: 0.5px;
+}
+
+.courseTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+  line-height: 1.4;
+}
+
+.courseAuthor {
+  font-size: 13px;
+  color: #a1a1aa;
+  margin-bottom: 8px;
+}
+
+.enrolledAt {
+  font-size: 12px;
+  color: #52525b;
+  margin-bottom: 12px;
+}
+
+.continueBtn {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6366f1;
+}
+
+/* ---- SETTINGS ---- */
+.settingsPanel {
+  max-width: 600px;
+}
+
+.settingsTitle {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.settingsCard {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  color: #fff;
+  padding: 12px 16px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #6366f1;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hint {
+  font-size: 12px;
+  color: #52525b;
+}
+
+.saveBtn {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  align-self: flex-start;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

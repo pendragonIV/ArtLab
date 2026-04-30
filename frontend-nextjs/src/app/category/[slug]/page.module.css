@@ -1,0 +1,47 @@
+.main {
+  background-color: #121212;
+  min-height: calc(100vh - 106px); /* minus header height */
+}
+
+.heroSection {
+  background: linear-gradient(180deg, #18181b 0%, #121212 100%);
+  padding: 60px 66px;
+  text-align: center;
+  border-bottom: 1px solid #27272a;
+}
+
+.categoryTitle {
+  font-size: 42px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.categoryDesc {
+  font-size: 18px;
+  color: #a1a1aa;
+}
+
+.container {
+  max-width: 1865px;
+  margin: 0 auto;
+  padding: 40px 66px 80px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 100px 0;
+  color: #a1a1aa;
+}
+
+.emptyState h2 {
+  font-size: 24px;
+  color: #ffffff;
+  margin-bottom: 12px;
+}

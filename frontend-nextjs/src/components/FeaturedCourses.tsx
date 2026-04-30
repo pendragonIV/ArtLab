@@ -2,31 +2,53 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import styles from './FeaturedCourses.module.css';
 
-const CourseCard = ({ course }: { course: any }) => (
-  <Link href={`/course/${course.id}`} className={styles.card}>
-    <div className={styles.thumbnailWrapper}>
-      <span className={styles.badge}>NEW</span>
-      <img src={course.thumbnail} alt={course.title} className={styles.thumbnail} />
-    </div>
-    <h3 className={styles.courseTitle}>{course.title}</h3>
-    <p className={styles.author}>{course.author}</p>
-    <div className={styles.priceBox}>
-      <span className={styles.price}>{course.price}</span>
-      <span className={styles.originalPrice}>{course.originalPrice}</span>
-      <span className={styles.couponTag}>[Coupon]</span>
-    </div>
-  </Link>
-);
+import CourseCard from './CourseCard';
 
-export default function FeaturedCourses() {
-  const dummyCourse = {
-    id: '1',
-    title: 'Advanced Character Illustration in Photoshop',
-    author: 'Elena Rostova',
-    price: '$89',
-    originalPrice: '$199',
-    thumbnail: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?q=80&w=2558&auto=format&fit=crop'
-  };
+// Define the type for the course data returned from the backend
+type Course = {
+  id: number;
+  title: string;
+  author: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  thumbnailUrl: string;
+  isNew: boolean;
+  isTrending: boolean;
+};
+
+export default async function FeaturedCourses() {
+  let courses: Course[] = [];
+  try {
+    // Fetch data from our new ASP.NET Core Backend
+    const res = await fetch('http://localhost:5149/api/courses', { cache: 'no-store' });
+    if (res.ok) {
+      courses = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch courses:", error);
+  }
+
+  // Fallback if API fails or is empty, to keep the UI intact
+  if (courses.length === 0) {
+    return (
+       <section className={styles.section}>
+         <div style={{ textAlign: 'center', padding: '50px', color: '#888' }}>
+            No courses available or backend is not running.
+         </div>
+       </section>
+    )
+  }
+
+  // Just duplicate or slice the data for the grids to show something nice
+  const top10 = courses.slice(0, 3);
+  const trending = courses.filter(c => c.isTrending).slice(0, 3);
+  if (trending.length === 0) trending.push(...courses.slice(0, 3));
+  const newCourses = courses.filter(c => c.isNew).slice(0, 5);
+  // Pad newCourses if not enough
+  while (newCourses.length < 5 && courses.length > 0) {
+      newCourses.push(courses[newCourses.length % courses.length]);
+  }
 
   return (
     <section className={styles.section}>
@@ -37,7 +59,7 @@ export default function FeaturedCourses() {
           <Link href="/courses" className={styles.viewAllBtn}>View all <ChevronRight size={16} /></Link>
         </div>
         <div className={styles.grid3}>
-          {[1,2,3].map(i => <CourseCard key={i} course={{...dummyCourse, id: `top-${i}`}} />)}
+          {top10.map((course, i) => <CourseCard key={`top-${i}`} {...course} />)}
         </div>
       </div>
 
@@ -48,7 +70,7 @@ export default function FeaturedCourses() {
           <Link href="/courses" className={styles.viewAllBtn}>View all <ChevronRight size={16} /></Link>
         </div>
         <div className={styles.grid3}>
-          {[1,2,3].map(i => <CourseCard key={i} course={{...dummyCourse, id: `trend-${i}`}} />)}
+          {trending.map((course, i) => <CourseCard key={`trend-${i}`} {...course} />)}
         </div>
       </div>
 
@@ -59,7 +81,7 @@ export default function FeaturedCourses() {
           <Link href="/courses" className={styles.viewAllBtn}>View all <ChevronRight size={16} /></Link>
         </div>
         <div className={styles.grid5}>
-          {[1,2,3,4,5].map(i => <CourseCard key={i} course={{...dummyCourse, id: `new-${i}`}} />)}
+          {newCourses.map((course, i) => <CourseCard key={`new-${i}`} {...course} />)}
         </div>
       </div>
     </section>

@@ -13,6 +13,8 @@ namespace ArtLab.Backend.Models
         public string? Description { get; set; }
         public bool IsNew { get; set; } = false;
         public bool IsTrending { get; set; } = false;
+        public bool IsClasscutEnabled { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ICollection<Chapter> Chapters { get; set; } = new List<Chapter>();
     }
 }

@@ -22,7 +22,7 @@ export default function CategoryBar() {
         {categories.map((cat, idx) => {
           const Icon = cat.icon;
           return (
-            <Link key={idx} href="#" className={styles.categoryCard}>
+            <Link key={idx} href={`/category/${cat.name.toLowerCase().replace(' ', '-')}`} className={styles.categoryCard}>
               <div className={styles.iconWrapper}>
                 <Icon size={24} strokeWidth={1.5} color="#fff" />
               </div>

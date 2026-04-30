@@ -40,6 +40,7 @@
   height: 34px;
   padding: 5px 12px;
   margin-right: auto;
+  position: relative;
 }
 
 .searchInput {
@@ -47,9 +48,59 @@
   background: transparent;
   outline: none;
   font-size: 11.4px;
-  color: #898989;
+  color: #000;
   width: 100%;
   margin-left: 6px;
+}
+
+.searchInput::placeholder {
+  color: #898989;
+}
+
+.searchDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin-top: 8px;
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #3F3F46;
+  transition: background 0.2s;
+  color: #fff;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background: #3F3F46;
+}
+
+.resultTitle {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resultAuthor {
+  font-size: 11px;
+  color: #A1A1AA;
+  margin-top: 2px;
 }
 
 .topLinks {
@@ -78,7 +129,14 @@
   padding: 0 66px;
   max-width: 1865px;
   margin: 0 auto;
-  overflow-x: auto;
+  overflow: visible; /* Changed from auto to visible so dropdown can show */
+}
+
+.categoryWrapper {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .categoryBtn {
@@ -89,6 +147,41 @@
   font-size: 13.7px;
   font-weight: 700;
   padding-right: 24px;
+  height: 100%;
+  cursor: pointer;
+}
+
+.categoryDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 240px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  display: none; /* Hidden by default */
+  flex-direction: column;
+  padding: 8px 0;
+  z-index: 200;
+}
+
+.categoryWrapper:hover .categoryDropdown {
+  display: flex; /* Show on hover */
+}
+
+.categoryDropdownItem {
+  padding: 12px 20px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.categoryDropdownItem:hover {
+  background: #2a2a2a;
+  color: #facc15;
 }
 
 .bottomNavLinks {

@@ -9,6 +9,14 @@ namespace ArtLab.Backend.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<Course> Courses { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Chapter> Chapters { get; set; }
+        public DbSet<Lesson> Lessons { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Enrollment> Enrollments { get; set; }
+        public DbSet<Series> Series { get; set; }
+        public DbSet<SeriesCourse> SeriesCourses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
