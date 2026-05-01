@@ -77,7 +77,7 @@ namespace ArtLab.Backend.Controllers
 
         // GET: api/courses/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Course>> GetCourse(int id)
+        public async Task<ActionResult<object>> GetCourse(int id)
         {
             var course = await _context.Courses
                 .Include(c => c.Chapters.OrderBy(ch => ch.OrderIndex))
@@ -89,7 +89,33 @@ namespace ArtLab.Backend.Controllers
                 return NotFound();
             }
 
-            return course;
+            var instructor = await _context.Users.FindAsync(course.InstructorId);
+
+            return new
+            {
+                course.Id,
+                course.Title,
+                course.Author,
+                course.Category,
+                course.Price,
+                course.OriginalPrice,
+                course.ThumbnailUrl,
+                course.IsNew,
+                course.IsTrending,
+                course.Level,
+                course.AudioLanguage,
+                course.SubtitleLanguage,
+                course.IncludesMaterials,
+                course.Chapters,
+                InstructorProfile = instructor != null ? new
+                {
+                    Headline = instructor.Headline,
+                    Bio = instructor.Bio,
+                    YoutubeUrl = instructor.YoutubeUrl,
+                    TwitterUrl = instructor.TwitterUrl,
+                    PortfolioImagesJson = instructor.PortfolioImagesJson
+                } : null
+            };
         }
 
         // POST: api/courses/seed-curriculum

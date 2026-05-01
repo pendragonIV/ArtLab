@@ -22,8 +22,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Bunny.net Stream service
-builder.Services.AddHttpClient<ArtLab.Backend.Services.BunnyStreamService>();
+// VdoCipher Video service
+builder.Services.AddHttpClient<ArtLab.Backend.Services.VdoCipherService>();
 
 // Configure CORS for Next.js frontend
 builder.Services.AddCors(options =>

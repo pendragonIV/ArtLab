@@ -12,12 +12,12 @@ namespace ArtLab.Backend.Controllers
     public class LessonsController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly BunnyStreamService _bunny;
+        private readonly VdoCipherService _vdoCipher;
 
-        public LessonsController(AppDbContext context, BunnyStreamService bunny)
+        public LessonsController(AppDbContext context, VdoCipherService vdoCipher)
         {
             _context = context;
-            _bunny = bunny;
+            _vdoCipher = vdoCipher;
         }
 
         private int? TryGetUserId()
@@ -53,12 +53,13 @@ namespace ArtLab.Backend.Controllers
                 }
             }
 
-            // Bunny signed embed URL — gắn IP user, hết hạn 2h
-            string? bunnyEmbedUrl = null;
-            if (canWatch && !string.IsNullOrEmpty(lesson.BunnyVideoId))
+            string? vdoCipherOtp = null;
+            string? vdoCipherPlaybackInfo = null;
+            if (canWatch && !string.IsNullOrEmpty(lesson.VdoCipherVideoId))
             {
-                var userIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-                bunnyEmbedUrl = _bunny.GetEmbedUrl(lesson.BunnyVideoId, userIp);
+                var (otp, playbackInfo) = await _vdoCipher.GetPlaybackInfoAsync(lesson.VdoCipherVideoId);
+                vdoCipherOtp = otp;
+                vdoCipherPlaybackInfo = playbackInfo;
             }
 
             return Ok(new
@@ -72,10 +73,10 @@ namespace ArtLab.Backend.Controllers
                 CourseId = courseId,
                 CourseTitle = lesson.Chapter.Course!.Title,
                 ChapterTitle = lesson.Chapter.Title,
-                // Only expose VideoUrl if user has access
                 VideoUrl = canWatch ? (lesson.VideoUrl ?? GetDemoVideoUrl(lesson)) : null,
-                BunnyVideoId = canWatch ? lesson.BunnyVideoId : null,
-                BunnyEmbedUrl = bunnyEmbedUrl,
+                VdoCipherVideoId = canWatch ? lesson.VdoCipherVideoId : null,
+                VdoCipherOtp = vdoCipherOtp,
+                VdoCipherPlaybackInfo = vdoCipherPlaybackInfo,
                 IsLocked = !canWatch
             });
         }
@@ -109,8 +110,8 @@ namespace ArtLab.Backend.Controllers
                         l.DurationMinutes,
                         l.IsFreePreview,
                         l.OrderIndex,
-                        l.BunnyVideoId,
-                        HasBunnyVideo = l.BunnyVideoId != null && l.BunnyVideoId != "",
+                        l.VdoCipherVideoId,
+                        HasVdoCipherVideo = l.VdoCipherVideoId != null && l.VdoCipherVideoId != "",
                         IsLocked = !l.IsFreePreview && !isEnrolled
                     })
                 })
@@ -122,7 +123,7 @@ namespace ArtLab.Backend.Controllers
         // POST /api/lessons/{lessonId}/complete  — Mark lesson as watched
         [HttpPost("{lessonId}/complete")]
         [Authorize]
-        public async Task<IActionResult> MarkComplete(int lessonId)
+        public IActionResult MarkComplete(int lessonId)
         {
             // For now return success — progress tracking can be added later
             return Ok(new { message = "Lesson marked as complete" });
@@ -130,15 +131,15 @@ namespace ArtLab.Backend.Controllers
 
         private static string GetDemoVideoUrl(Models.Lesson lesson)
         {
-            // Rotating sample videos for demo (Big Buck Bunny clips)
-            var demos = new[]
+            // Rotating sample videos for demo
+            var sampleVideos = new[]
             {
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
                 "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
                 "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
+                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
             };
-            return demos[lesson.Id % demos.Length];
+            return sampleVideos[lesson.Id % sampleVideos.Length];
         }
     }
 }

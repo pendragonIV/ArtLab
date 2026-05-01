@@ -14,8 +14,10 @@ namespace ArtLab.Backend.Models
         
         public string? VideoUrl { get; set; }
 
-        /// <summary>Bunny Stream video GUID — khi set sẽ dùng Bunny player thay vì VideoUrl</summary>
-        public string? BunnyVideoId { get; set; }
+
+        
+        /// <summary>VdoCipher video ID</summary>
+        public string? VdoCipherVideoId { get; set; }
         
         public int OrderIndex { get; set; }
 

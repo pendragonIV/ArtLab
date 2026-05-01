@@ -1,0 +1,113 @@
+.stickyBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(15, 15, 18, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 24px;
+  border-radius: 8px;
+}
+
+.icon {
+  color: #ff5e5e;
+  width: 24px;
+  height: 24px;
+}
+
+.textGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+.date {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #e44d26, #f16529);
+  padding: 8px 24px;
+  border-radius: 8px;
+  gap: 20px;
+}
+
+.untilText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.timerBlocks {
+  display: flex;
+  gap: 8px;
+}
+
+.block {
+  display: flex;
+  align-items: baseline;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #1a1a1a;
+  min-width: 48px;
+  justify-content: center;
+}
+
+.num {
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.unit {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 2px;
+  color: #e44d26;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .left, .right {
+    width: 100%;
+    justify-content: center;
+  }
+}

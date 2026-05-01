@@ -44,140 +44,37 @@ export default function AdminDashboard() {
     title: "", author: "", category: "", price: "", originalPrice: "", thumbnailUrl: "", isClasscutEnabled: false
   });
 
-  // Video upload state
-  type LessonWithStatus = { id: number; title: string; isFreePreview: boolean; durationMinutes: number; bunnyVideoId?: string; };
-  type ChapterWithLessons = { id: number; title: string; lessons: LessonWithStatus[]; };
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
-  const [chapters, setChapters] = useState<ChapterWithLessons[]>([]);
-  const [uploadingLessonId, setUploadingLessonId] = useState<number | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<Record<number, string>>({}); // lessonId -> status msg
-  const [uploadPercent, setUploadPercent] = useState<Record<number, number>>({}); // lessonId -> 0-100
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeUploadLesson, setActiveUploadLesson] = useState<LessonWithStatus | null>(null);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      window.location.href = "/";
-      return;
-    }
-    if (session) {
-      fetchData();
-    }
-  }, [session, status]);
-
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      // @ts-ignore
-      const token = session.backendToken;
-      
-      // Fetch Stats
-      const statsRes = await fetch("http://localhost:5149/api/admin/stats", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (statsRes.ok) setStats(await statsRes.json());
+    // @ts-ignore
+    const token = session?.backendToken;
+    if (!token) return;
 
-      // Fetch Courses
-      const coursesRes = await fetch("http://localhost:5149/api/courses");
+    try {
+      const [statsRes, coursesRes, usersRes] = await Promise.all([
+        fetch("http://localhost:5149/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("http://localhost:5149/api/admin/courses", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("http://localhost:5149/api/admin/users", { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      if (statsRes.ok) setStats(await statsRes.json());
       if (coursesRes.ok) setCourses(await coursesRes.json());
-      
-      // Fetch Users
-      const usersRes = await fetch("http://localhost:5149/api/admin/users", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       if (usersRes.ok) setUsers(await usersRes.json());
-      
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching admin data", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCourseChapters = async (courseId: number) => {
+  useEffect(() => {
     // @ts-ignore
-    const token = session?.backendToken;
-    const res = await fetch(`http://localhost:5149/api/lessons/course/${courseId}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setChapters(data.chapters || []);
+    if (status === "authenticated" && session?.user?.role === "Admin") {
+      fetchData();
+    // @ts-ignore
+    } else if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "Admin")) {
+      window.location.href = "/";
     }
-  };
-
-  const handleVideoUpload = async (lessonId: number, file: File) => {
-    // @ts-ignore
-    const token = session?.backendToken;
-    if (!token) { alert("Not authenticated"); return; }
-
-    setUploadingLessonId(lessonId);
-    setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
-    setUploadProgress(p => ({ ...p, [lessonId]: "Preparing..." }));
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    await new Promise<void>((resolve) => {
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          setUploadPercent(p => ({ ...p, [lessonId]: pct }));
-          setUploadProgress(p => ({ ...p, [lessonId]: pct < 100 ? `Uploading... ${pct}%` : "Processing on Bunny..." }));
-        }
-      });
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          setUploadProgress(p => ({ ...p, [lessonId]: "✅ Done! Encoding in progress..." }));
-          setUploadPercent(p => ({ ...p, [lessonId]: 100 }));
-          if (selectedCourseId) fetchCourseChapters(selectedCourseId);
-        } else {
-          setUploadProgress(p => ({ ...p, [lessonId]: `❌ Error: ${xhr.responseText}` }));
-          setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
-        }
-        setUploadingLessonId(null);
-        setActiveUploadLesson(null);
-        resolve();
-      });
-
-      xhr.addEventListener("error", () => {
-        setUploadProgress(p => ({ ...p, [lessonId]: "❌ Network error" }));
-        setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
-        setUploadingLessonId(null);
-        setActiveUploadLesson(null);
-        resolve();
-      });
-
-      xhr.open("POST", `http://localhost:5149/api/admin/bunny/lessons/${lessonId}/upload`);
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.send(formData);
-    });
-  };
-
-  const handleVideoDelete = async (lessonId: number, lessonTitle: string) => {
-    if (!confirm(`Delete Bunny video for "${lessonTitle}"? This cannot be undone.`)) return;
-    // @ts-ignore
-    const token = session?.backendToken;
-    if (!token) return;
-    try {
-      const res = await fetch(`http://localhost:5149/api/admin/bunny/lessons/${lessonId}/video`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        setUploadProgress(p => ({ ...p, [lessonId]: "🗑️ Video deleted" }));
-        if (selectedCourseId) fetchCourseChapters(selectedCourseId);
-      } else {
-        alert("Failed to delete video");
-      }
-    } catch {
-      alert("Network error");
-    }
-  };
+  }, [status, session]);
 
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,23 +110,58 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteUser = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!confirm("Are you sure you want to delete this user? (This will also delete their courses and videos if they are a tutor)")) return;
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`http://localhost:5149/api/admin/users/${id}`, {
+      const res = await fetch(`http://localhost:5149/api/admin/tutors/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Fallback for normal user deletion
+      if (!res.ok && res.status === 404) {
+        await fetch(`http://localhost:5149/api/admin/users/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      alert("User and associated data deleted");
+      fetchData();
+    } catch (err) {
+      alert("Error deleting user");
+    }
+  };
+
+  const handleToggleBan = async (id: number, currentBanState: boolean) => {
+    try {
+      // @ts-ignore
+      const token = session.backendToken;
+      const res = await fetch(`http://localhost:5149/api/admin/users/${id}/ban`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ isBanned: !currentBanState })
+      });
+      if (res.ok) fetchData();
+    } catch (err) {
+      alert("Error toggling ban status");
+    }
+  };
+
+  const handleDeleteCourse = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this course and ALL its videos?")) return;
+    try {
+      // @ts-ignore
+      const token = session.backendToken;
+      const res = await fetch(`http://localhost:5149/api/admin/courses/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
-        alert("User deleted");
+        alert("Course deleted");
         fetchData();
-      } else {
-        const errorText = await res.text();
-        alert(errorText);
       }
     } catch (err) {
-      alert("Error deleting user");
+      alert("Error deleting course");
     }
   };
 
@@ -263,19 +195,13 @@ export default function AdminDashboard() {
           >
             <BookOpen size={20} /> Courses
           </button>
-          <button 
-            className={`${styles.navItem} ${activeTab === 'videos' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("videos")}
-          >
-            <Video size={20} /> Videos 🐇
-          </button>
         </nav>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className={styles.mainContent}>
         <header className={styles.header}>
-          <h2>{activeTab === 'dashboard' ? 'Overview' : activeTab === 'videos' ? '🐇 Bunny Video Upload' : 'Course Management'}</h2>
+          <h2>{activeTab === 'dashboard' ? 'Overview' : activeTab === 'courses' ? 'Course Management' : 'User Management'}</h2>
           <div className={styles.userProfile}>
             <img src={session?.user?.image || ""} alt="" className={styles.avatar} />
           </div>
@@ -341,6 +267,7 @@ export default function AdminDashboard() {
                         <td>${course.price.toFixed(2)}</td>
                         <td>
                           <button className={styles.actionBtn}>Edit</button>
+                          <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5', marginLeft: '8px' }} onClick={() => handleDeleteCourse(course.id)}>Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -383,6 +310,11 @@ export default function AdminDashboard() {
                         </td>
                         <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                         <td>
+                          {/* @ts-ignore */}
+                          <button className={styles.actionBtn} style={{ background: user.isBanned ? '#10b981' : '#f59e0b', color: '#fff', borderColor: 'transparent', marginRight: '8px' }} onClick={() => handleToggleBan(user.id, user.isBanned || false)}>
+                            {/* @ts-ignore */}
+                            {user.isBanned ? 'Unban' : 'Ban'}
+                          </button>
                           <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteUser(user.id)}>Delete</button>
                         </td>
                       </tr>
@@ -393,196 +325,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── VIDEO UPLOAD TAB ── */}
-          {activeTab === 'videos' && (
-            <div style={{ padding: '0 0 40px' }}>
-              {/* Step 1: Select course */}
-              <div style={{ marginBottom: '24px', background: '#18181b', border: '1px solid #27272a', borderRadius: '12px', padding: '24px' }}>
-                <h3 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 700, color: '#fff' }}>1. Select Course</h3>
-                <select
-                  style={{ width: '100%', padding: '10px 14px', background: '#27272a', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', fontSize: '14px' }}
-                  value={selectedCourseId ?? ''}
-                  onChange={e => {
-                    const id = Number(e.target.value);
-                    setSelectedCourseId(id);
-                    setChapters([]);
-                    if (id) fetchCourseChapters(id);
-                  }}
-                >
-                  <option value=''>-- Choose a course --</option>
-                  {courses.map(c => (
-                    <option key={c.id} value={c.id}>{c.title} (by {c.author})</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Step 2: Upload per lesson */}
-              {selectedCourseId && chapters.length > 0 && (
-                <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '12px', padding: '24px' }}>
-                  <h3 style={{ marginBottom: '20px', fontSize: '16px', fontWeight: 700, color: '#fff' }}>2. Upload Videos per Lesson</h3>
-                  {chapters.map(chapter => (
-                    <div key={chapter.id} style={{ marginBottom: '24px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid #27272a' }}>
-                        {chapter.title}
-                      </div>
-                      {chapter.lessons.map((lesson: any) => {
-                        const status = uploadProgress[lesson.id];
-                        const isUploading = uploadingLessonId === lesson.id;
-                        const hasBunny = !!lesson.bunnyVideoId;
-                        return (
-                          <div key={lesson.id} style={{ marginBottom: '8px' }}>
-                            {/* Lesson row */}
-                            <div style={{
-                              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
-                              background: isUploading ? '#0f172a' : '#111113',
-                              borderRadius: isUploading ? '8px 8px 0 0' : '8px',
-                              border: `1px solid ${isUploading ? '#1d4ed8' : '#1f1f23'}`,
-                              borderBottom: isUploading ? 'none' : undefined,
-                              transition: 'all 0.2s'
-                            }}>
-                              {/* Lesson info */}
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>{lesson.title}</div>
-                                <div style={{ fontSize: '12px', color: '#71717a', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                  <span>{lesson.durationMinutes}m</span>
-                                  {lesson.isFreePreview && <span style={{ color: '#4ade80', background: '#14532d', padding: '1px 6px', borderRadius: '4px' }}>FREE</span>}
-                                </div>
-                              </div>
-
-                              {/* Status */}
-                              <div style={{ minWidth: '200px', fontSize: '12px' }}>
-                                {hasBunny && !isUploading ? (
-                                  <span style={{ color: '#4ade80', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <CheckCircle2 size={13} /> Bunny DRM active
-                                  </span>
-                                ) : isUploading ? (
-                                  <span style={{ color: '#60a5fa' }}>
-                                    {uploadPercent[lesson.id] === 100 ? '⚙️ Encoding...' : `📤 ${uploadPercent[lesson.id] ?? 0}% uploaded`}
-                                  </span>
-                                ) : status ? (
-                                  <span style={{ color: status.startsWith('✅') ? '#4ade80' : status.startsWith('❌') ? '#f87171' : '#facc15' }}>{status}</span>
-                                ) : (
-                                  <span style={{ color: '#52525b' }}>No video</span>
-                                )}
-                              </div>
-
-                              {/* Action buttons */}
-                              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                                <input
-                                  ref={fileInputRef}
-                                  type="file"
-                                  accept="video/*"
-                                  style={{ display: 'none' }}
-                                  onChange={e => {
-                                    const file = e.target.files?.[0];
-                                    if (file && activeUploadLesson) handleVideoUpload(activeUploadLesson.id, file);
-                                    e.target.value = '';
-                                  }}
-                                />
-
-                                {isUploading ? (
-                                  <button disabled style={{
-                                    display: 'flex', alignItems: 'center', gap: '5px',
-                                    background: '#1e3a8a', color: '#93c5fd',
-                                    border: 'none', padding: '7px 16px', borderRadius: '6px',
-                                    fontSize: '12px', fontWeight: 600, cursor: 'not-allowed', whiteSpace: 'nowrap'
-                                  }}>
-                                    <Loader2 size={12} style={{ animation: 'spin 0.8s linear infinite' }} />
-                                    {uploadPercent[lesson.id] === 100 ? 'Encoding...' : `${uploadPercent[lesson.id] ?? 0}%`}
-                                  </button>
-                                ) : hasBunny ? (
-                                  <>
-                                    <button
-                                      title="Replace video on Bunny"
-                                      onClick={() => { setActiveUploadLesson(lesson); setTimeout(() => fileInputRef.current?.click(), 50); }}
-                                      style={{
-                                        display: 'flex', alignItems: 'center', gap: '5px',
-                                        background: '#1d4ed8', color: '#fff',
-                                        border: 'none', padding: '7px 13px', borderRadius: '6px',
-                                        fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap'
-                                      }}
-                                    >
-                                      <Upload size={12} /> Replace
-                                    </button>
-                                    <button
-                                      title="Delete video from Bunny"
-                                      onClick={() => handleVideoDelete(lesson.id, lesson.title)}
-                                      style={{
-                                        display: 'flex', alignItems: 'center', gap: '5px',
-                                        background: '#7f1d1d', color: '#fca5a5',
-                                        border: '1px solid #991b1b', padding: '7px 13px', borderRadius: '6px',
-                                        fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap'
-                                      }}
-                                    >
-                                      🗑️ Delete
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button
-                                    onClick={() => { setActiveUploadLesson(lesson); setTimeout(() => fileInputRef.current?.click(), 50); }}
-                                    style={{
-                                      display: 'flex', alignItems: 'center', gap: '5px',
-                                      background: '#4f46e5', color: '#fff',
-                                      border: 'none', padding: '7px 13px', borderRadius: '6px',
-                                      fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap'
-                                    }}
-                                  >
-                                    <Upload size={12} /> Upload
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Progress bar — shown while uploading */}
-                            {isUploading && (
-                              <div style={{
-                                background: '#0a1628',
-                                border: '1px solid #1d4ed8', borderTop: 'none',
-                                borderRadius: '0 0 8px 8px',
-                                padding: '10px 14px'
-                              }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px', color: '#93c5fd' }}>
-                                  <span>
-                                    {uploadPercent[lesson.id] === 100
-                                      ? '⚙️ Bunny is encoding your video...'
-                                      : '📤 Uploading to Bunny.net'}
-                                  </span>
-                                  <span style={{ fontWeight: 700 }}>{uploadPercent[lesson.id] ?? 0}%</span>
-                                </div>
-                                {/* Track */}
-                                <div style={{ height: '8px', background: '#1e3a8a', borderRadius: '99px', overflow: 'hidden' }}>
-                                  {/* Fill */}
-                                  <div style={{
-                                    height: '100%',
-                                    width: `${uploadPercent[lesson.id] ?? 0}%`,
-                                    background: (uploadPercent[lesson.id] ?? 0) === 100
-                                      ? 'linear-gradient(90deg, #4ade80, #22c55e)'
-                                      : 'linear-gradient(90deg, #6366f1, #3b82f6)',
-                                    borderRadius: '99px',
-                                    transition: 'width 0.25s ease',
-                                    boxShadow: '0 0 8px rgba(99,102,241,0.6)'
-                                  }} />
-                                </div>
-                                {(uploadPercent[lesson.id] ?? 0) === 100 && (
-                                  <div style={{ marginTop: '6px', fontSize: '11px', color: '#4ade80' }}>
-                                    ✅ Upload complete — encoding takes 2–5 minutes
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {selectedCourseId && chapters.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#52525b' }}>No chapters found. Add curriculum first.</div>
-              )}
-            </div>
-          )}
         </div>
       </main>
 

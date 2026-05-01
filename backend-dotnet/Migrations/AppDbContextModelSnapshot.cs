@@ -89,6 +89,9 @@ namespace ArtLab.Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AudioLanguage")
+                        .HasColumnType("text");
+
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasColumnType("text");
@@ -106,6 +109,12 @@ namespace ArtLab.Backend.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IncludesMaterials")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("InstructorId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsClasscutEnabled")
                         .HasColumnType("boolean");
 
@@ -115,6 +124,9 @@ namespace ArtLab.Backend.Migrations
                     b.Property<bool>("IsTrending")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Level")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("OriginalPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -122,6 +134,9 @@ namespace ArtLab.Backend.Migrations
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("SubtitleLanguage")
+                        .HasColumnType("text");
 
                     b.Property<string>("ThumbnailUrl")
                         .IsRequired()
@@ -132,6 +147,8 @@ namespace ArtLab.Backend.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("InstructorId");
 
                     b.ToTable("Courses");
                 });
@@ -170,9 +187,6 @@ namespace ArtLab.Backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BunnyVideoId")
-                        .HasColumnType("text");
-
                     b.Property<int>("ChapterId")
                         .HasColumnType("integer");
 
@@ -187,6 +201,9 @@ namespace ArtLab.Backend.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VdoCipherVideoId")
                         .HasColumnType("text");
 
                     b.Property<string>("VideoUrl")
@@ -209,6 +226,12 @@ namespace ArtLab.Backend.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentTransactionId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -323,6 +346,9 @@ namespace ArtLab.Backend.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("text");
 
+                    b.Property<string>("Bio")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -330,7 +356,16 @@ namespace ArtLab.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Headline")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsBanned")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PortfolioImagesJson")
                         .HasColumnType("text");
 
                     b.Property<string>("ProviderId")
@@ -340,8 +375,14 @@ namespace ArtLab.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("TwitterUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("Username")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("YoutubeUrl")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -383,6 +424,15 @@ namespace ArtLab.Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("ArtLab.Backend.Models.Course", b =>
+                {
+                    b.HasOne("ArtLab.Backend.Models.User", "Instructor")
+                        .WithMany()
+                        .HasForeignKey("InstructorId");
+
+                    b.Navigation("Instructor");
                 });
 
             modelBuilder.Entity("ArtLab.Backend.Models.Enrollment", b =>

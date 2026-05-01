@@ -1,63 +1,350 @@
+/* ══════════════════════════════════════════════════════
+   ARTLAB HERO  —  Auto-scroll slider, Coloso-inspired
+══════════════════════════════════════════════════════ */
+
 .heroSection {
   width: 100vw;
-  height: 480px;
-  background-color: #00A3FF; /* The blue side background seen in screenshot */
+  height: 88vh;
+  min-height: 640px;
+  max-height: 900px;
+  background-color: #08080a;
   margin-left: calc(-50vw + 50%);
   margin-right: calc(-50vw + 50%);
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
-}
-
-.sliderContainer {
-  width: 1200px;
-  height: 100%;
   position: relative;
-  background-color: #000;
 }
 
-.slideImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.slideOverlay {
+/* ── Background Layers (crossfade) ───────────────────── */
+.bgLayer {
   position: absolute;
-  top: 0;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 0.9s ease, transform 8s ease;
+  z-index: 0;
+}
+
+.bgLayerActive {
+  opacity: 0.4;
+  transform: scale(1);
+}
+
+/* ── Gradient Overlay ────────────────────────────────── */
+.gradientOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(100deg, #08080a 0%, rgba(8,8,10,0.9) 38%, rgba(8,8,10,0.2) 72%, transparent 100%),
+    linear-gradient(0deg, #08080a 0%, transparent 38%),
+    radial-gradient(ellipse 55% 60% at 72% 40%, color-mix(in srgb, var(--slide-accent, #6366f1) 14%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+/* Shimmer top line */
+.gradientOverlay::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--slide-accent, #6366f1) 50%, transparent) 30%, transparent);
+  animation: shimmer 4s ease infinite;
+}
+
+@keyframes shimmer {
+  0%,100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+/* ── Slide Content ───────────────────────────────────── */
+.slideContent {
+  position: absolute;
+  bottom: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+  right: 0;
+  z-index: 2;
+  padding: 0 10vw 110px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0 80px;
+  animation: fadeUp 0.55s ease both;
 }
 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Badge */
 .badge {
-  background-color: #ffb200;
-  color: #000;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 4px 8px;
-  display: inline-block;
-  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99,102,241,0.13);
+  color: #a5b4fc;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border: 1px solid rgba(99,102,241,0.3);
+  backdrop-filter: blur(10px);
   width: fit-content;
+  margin-bottom: 20px;
 }
 
+/* Title */
 .title {
   color: #fff;
-  font-size: 40px;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 12px;
-  max-width: 500px;
+  font-size: clamp(40px, 5.2vw, 74px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -1.5px;
+  margin-bottom: 18px;
+  max-width: 780px;
+  background: linear-gradient(145deg, #ffffff 0%, #c7c7d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* Subtitle */
 .subtitle {
-  color: #ccc;
-  font-size: 16px;
-  max-width: 400px;
+  color: #8a8aa0;
+  font-size: clamp(14px, 1.4vw, 17px);
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 30px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statNumber {
+  font-size: 21px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 10px;
+  color: #5a5a70;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.statDivider {
+  width: 1px;
+  height: 30px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* CTA */
+.ctaGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 13px 26px;
+  border-radius: 11px;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.42);
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(99,102,241,0.65);
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  color: #b0b0c8;
+  font-weight: 600;
+  font-size: 14.5px;
+  padding: 13px 26px;
+  border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.1);
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+/* ── Controls Bar (Coloso-style) ─────────────────────── */
+.controls {
+  position: absolute;
+  bottom: 36px;
+  right: 10vw;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Arrow buttons */
+.arrowBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.arrowBtn:hover {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* Counter + Progress track */
+.counterWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counterCurrent {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 16px;
+  text-align: center;
+}
+
+.counterTotal {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.35);
+  min-width: 16px;
+  text-align: center;
+}
+
+.progressTrack {
+  width: 80px;
+  height: 2px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.05s linear, background-color 0.5s ease;
+}
+
+/* Play / Pause */
+.playBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.playBtn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Dot indicators */
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 6px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+
+.dotActive {
+  width: 20px;
+  border-radius: 3px;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .heroSection {
+    height: 70vh;
+    min-height: 500px;
+  }
+
+  .slideContent {
+    padding: 0 6vw 96px;
+  }
+
+  .controls {
+    right: 6vw;
+    bottom: 20px;
+  }
+
+  .progressTrack {
+    width: 50px;
+  }
+
+  .stats {
+    gap: 16px;
+  }
+
+  .ctaGroup {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }

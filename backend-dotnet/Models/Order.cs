@@ -12,7 +12,11 @@ namespace ArtLab.Backend.Models
 
         public decimal TotalAmount { get; set; }
         
-        public string Status { get; set; } = "Completed"; // "Pending", "Completed", "Cancelled"
+        public string Status { get; set; } = "Pending"; // "Pending", "Completed", "Cancelled"
+        
+        public string? PaymentMethod { get; set; } // "VNPay", "MoMo", "BankTransfer"
+        
+        public string? PaymentTransactionId { get; set; } // Transaction ID from the payment gateway
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

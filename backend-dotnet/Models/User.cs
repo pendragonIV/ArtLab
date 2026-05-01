@@ -12,6 +12,15 @@ namespace ArtLab.Backend.Models
         // "Student", "Instructor", "Admin"
         public string Role { get; set; } = "Student";
         
+        public bool IsBanned { get; set; } = false;
+        
+        // Instructor Profile Fields
+        public string? Headline { get; set; } // e.g., "Senior Concept Artist at Riot Games"
+        public string? Bio { get; set; }      // Detailed introduction
+        public string? YoutubeUrl { get; set; }
+        public string? TwitterUrl { get; set; }
+        public string? PortfolioImagesJson { get; set; } // JSON array of image URLs
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

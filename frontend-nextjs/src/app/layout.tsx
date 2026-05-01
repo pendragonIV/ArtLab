@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { NextAuthProvider } from "@/components/Providers";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import FloatingChat from "@/components/FloatingChat";
 
 const inter = Inter({
   variable: "--font-inter",
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
 });
 
 export const metadata: Metadata = {
@@ -22,7 +24,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body suppressHydrationWarning>
         <NextAuthProvider>
-          {children}
+          <LanguageProvider>
+            {children}
+            <FloatingChat />
+          </LanguageProvider>
         </NextAuthProvider>
       </body>
     </html>

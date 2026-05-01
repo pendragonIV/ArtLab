@@ -1,77 +1,169 @@
+/* ─── Trust Section ─────────────────────────────────── */
 .section {
-  padding: 80px 0;
+  padding: 88px 0 96px;
   max-width: 1200px;
   margin: 0 auto;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+/* Subtle top separator line with gradient fade */
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-medium), transparent);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 64px;
+  margin-bottom: 56px;
 }
 
-.title {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--foreground);
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--accent);
   margin-bottom: 16px;
 }
 
-.subtitle {
-  font-size: 18px;
-  color: var(--text-muted);
-  max-width: 600px;
-  margin: 0 auto;
+.eyebrow::before,
+.eyebrow::after {
+  content: '';
+  height: 1px;
+  width: 24px;
+  background: var(--accent-border);
 }
 
+.title {
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 900;
+  color: var(--foreground);
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ─── Grid ───────────────────────────────────────────── */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  gap: 24px;
 }
 
+/* ─── Card ───────────────────────────────────────────── */
 .card {
-  background-color: var(--surface-medium);
+  background: var(--bg-card);
   padding: 40px 32px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  transition: transform 0.3s ease;
+  border: 1px solid var(--border-subtle);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient spotlight that appears on hover */
+.card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+}
+
+.card:hover::before {
+  opacity: 1;
 }
 
 .card:hover {
   transform: translateY(-8px);
-  border-color: rgba(250, 204, 21, 0.2);
+  border-color: rgba(99, 102, 241, 0.28);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(99, 102, 241, 0.1);
 }
 
+/* ─── Icon Wrapper ───────────────────────────────────── */
 .iconWrapper {
-  width: 72px;
-  height: 72px;
-  background-color: rgba(250, 204, 21, 0.1);
+  width: 68px;
+  height: 68px;
+  background: var(--accent-soft);
   color: var(--accent);
-  border-radius: 50%;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 24px auto;
+  border: 1px solid var(--accent-border);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  position: relative;
 }
 
+/* Inner glow ring */
+.iconWrapper::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 19px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.3), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.card:hover .iconWrapper {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+}
+
+.card:hover .iconWrapper::after {
+  opacity: 1;
+}
+
+/* ─── Text ───────────────────────────────────────────── */
 .cardTitle {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   margin-bottom: 12px;
   color: var(--foreground);
+  letter-spacing: -0.2px;
 }
 
 .cardDesc {
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text-muted);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-/* Responsive */
+/* ─── Responsive ─────────────────────────────────────── */
 @media (max-width: 900px) {
   .grid {
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .section {
+    padding: 64px 24px;
   }
 }

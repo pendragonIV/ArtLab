@@ -15,7 +15,7 @@ const trustItems = [
   {
     icon: Clock,
     title: 'Lifetime Access',
-    desc: 'Buy once, own forever. Learn at your own pace without worrying about monthly subscriptions or expiration dates.',
+    desc: 'Buy once, own forever. Learn at your own pace without monthly subscriptions or expiration dates.',
   }
 ];
 
@@ -23,7 +23,8 @@ export default function TrustSection() {
   return (
     <section className={styles.section}>
       <div className={styles.header}>
-        <h2 className={styles.title}>Why Choose ArtLab?</h2>
+        <p className={styles.eyebrow}>Why ArtLab</p>
+        <h2 className={styles.title}>Built for Serious Creatives</h2>
         <p className={styles.subtitle}>
           We provide the highest quality learning experience for aspiring digital artists.
         </p>
@@ -35,7 +36,7 @@ export default function TrustSection() {
           return (
             <div key={index} className={styles.card}>
               <div className={styles.iconWrapper}>
-                <Icon size={32} />
+                <Icon size={28} strokeWidth={1.7} />
               </div>
               <h3 className={styles.cardTitle}>{item.title}</h3>
               <p className={styles.cardDesc}>{item.desc}</p>

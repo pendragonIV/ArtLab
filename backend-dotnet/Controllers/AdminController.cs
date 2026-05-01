@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using ArtLab.Backend.Data;
 using ArtLab.Backend.Models;
+using ArtLab.Backend.Services;
 
 namespace ArtLab.Backend.Controllers
 {
@@ -13,10 +14,12 @@ namespace ArtLab.Backend.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly VdoCipherService _vdoCipherService;
 
-        public AdminController(AppDbContext context)
+        public AdminController(AppDbContext context, VdoCipherService vdoCipherService)
         {
             _context = context;
+            _vdoCipherService = vdoCipherService;
         }
 
         // GET: api/admin/stats
@@ -75,32 +78,160 @@ namespace ArtLab.Backend.Controllers
         public async Task<IActionResult> GetUsers()
         {
             var users = await _context.Users
-                .Select(u => new { u.Id, Name = u.Username, u.Email, u.Role, u.CreatedAt })
+                .Select(u => new { u.Id, Name = u.Username, u.Email, u.Role, u.CreatedAt, u.IsBanned })
                 .ToListAsync();
             return Ok(users);
         }
+
+        // PATCH: api/admin/users/5/ban
+        [HttpPatch("users/{id}/ban")]
+        public async Task<IActionResult> ToggleBanUser(int id, [FromBody] SetBanDto dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (currentUserId == id.ToString())
+                return BadRequest("You cannot ban your own admin account.");
+
+            user.IsBanned = dto.IsBanned;
+            await _context.SaveChangesAsync();
+            return Ok(new { user.Id, user.Email, user.IsBanned, message = user.IsBanned ? "User banned." : "User unbanned." });
+        }
+
+        public class SetBanDto { public bool IsBanned { get; set; } }
 
         // DELETE: api/admin/users/5
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            // Prevent deleting yourself! (Optional safety net)
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (currentUserId == id.ToString())
-            {
                 return BadRequest("You cannot delete your own admin account.");
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "User deleted successfully." });
+        }
+
+        // PATCH: api/admin/users/5/role  — promote/demote user role
+        [HttpPatch("users/{id}/role")]
+        public async Task<IActionResult> SetUserRole(int id, [FromBody] SetRoleDto dto)
+        {
+            var allowed = new[] { "Student", "Instructor", "Admin" };
+            if (!allowed.Contains(dto.Role))
+                return BadRequest($"Role must be one of: {string.Join(", ", allowed)}");
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (currentUserId == id.ToString() && dto.Role != "Admin")
+                return BadRequest("Cannot demote your own Admin account.");
+
+            user.Role = dto.Role;
+            await _context.SaveChangesAsync();
+            return Ok(new { user.Id, user.Email, user.Role, message = $"Role updated to {dto.Role}." });
+        }
+
+        // GET: api/admin/courses — all courses with instructor info
+        [HttpGet("courses")]
+        public async Task<IActionResult> GetAllCourses()
+        {
+            var courses = await _context.Courses
+                .Include(c => c.Instructor)
+                .OrderByDescending(c => c.CreatedAt)
+                .Select(c => new
+                {
+                    c.Id, c.Title, c.Author, c.Category, c.Price, c.OriginalPrice,
+                    c.IsNew, c.IsTrending, c.IsClasscutEnabled, c.CreatedAt,
+                    InstructorId   = c.InstructorId,
+                    InstructorName = c.Instructor != null ? c.Instructor.Username : "Admin",
+                })
+                .ToListAsync();
+            return Ok(courses);
+        }
+
+        // DELETE: api/admin/courses/5 — admin can delete any course (Cascades to VdoCipher)
+        [HttpDelete("courses/{id}")]
+        public async Task<IActionResult> DeleteCourse(int id)
+        {
+            var course = await _context.Courses
+                .Include(c => c.Chapters)
+                .ThenInclude(ch => ch.Lessons)
+                .FirstOrDefaultAsync(c => c.Id == id);
+                
+            if (course == null) return NotFound();
+
+            // Cascade delete videos from VdoCipher
+            foreach (var chapter in course.Chapters)
+            {
+                foreach (var lesson in chapter.Lessons)
+                {
+                    if (!string.IsNullOrEmpty(lesson.VdoCipherVideoId))
+                    {
+                        try
+                        {
+                            await _vdoCipherService.DeleteVideoAsync(lesson.VdoCipherVideoId);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Failed to delete video {lesson.VdoCipherVideoId} from VdoCipher: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            _context.Courses.Remove(course);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"Course '{course.Title}' and its videos were deleted successfully." });
+        }
+
+        // DELETE: api/admin/tutors/5 — admin can delete tutor (Cascades to Courses and VdoCipher)
+        [HttpDelete("tutors/{id}")]
+        public async Task<IActionResult> DeleteTutor(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null || user.Role != "Instructor") return NotFound("Tutor not found.");
+
+            var courses = await _context.Courses
+                .Include(c => c.Chapters)
+                .ThenInclude(ch => ch.Lessons)
+                .Where(c => c.Author == user.Username) // Or use InstructorId if that relation is strictly enforced
+                .ToListAsync();
+
+            foreach (var course in courses)
+            {
+                // Cascade delete videos from VdoCipher for this course
+                foreach (var chapter in course.Chapters)
+                {
+                    foreach (var lesson in chapter.Lessons)
+                    {
+                        if (!string.IsNullOrEmpty(lesson.VdoCipherVideoId))
+                        {
+                            try
+                            {
+                                await _vdoCipherService.DeleteVideoAsync(lesson.VdoCipherVideoId);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Failed to delete video {lesson.VdoCipherVideoId}: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+                _context.Courses.Remove(course);
             }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "User deleted successfully." });
+            return Ok(new { message = $"Tutor '{user.Username}', their {courses.Count} courses, and all related videos were deleted." });
         }
+
+        public class SetRoleDto { public required string Role { get; set; } }
     }
 }

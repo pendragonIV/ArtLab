@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AddToCartButton({ courseId, className }: { courseId: number, className?: string }) {
+export default function AddToCartButton({ courseId, className, label }: { courseId: number, className?: string, label?: string }) {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -49,7 +49,8 @@ export default function AddToCartButton({ courseId, className }: { courseId: num
       disabled={loading}
       style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
     >
-      {loading ? "Adding..." : "Add to Cart"}
+      {loading ? "Adding..." : (label ?? "Add to Cart")}
     </button>
   );
 }
+

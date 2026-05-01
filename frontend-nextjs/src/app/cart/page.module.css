@@ -227,6 +227,65 @@
   cursor: not-allowed;
 }
 
+/* ---- PAYMENT METHODS ---- */
+.paymentMethods {
+  margin-bottom: 24px;
+}
+
+.paymentTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #a1a1aa;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.paymentOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #111113;
+  border: 1px solid #27272a;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.paymentOption:hover {
+  border-color: #3f3f46;
+  background: #1a1a1f;
+}
+
+.paymentOption.selected {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.radioCircle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #52525b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.selected .radioCircle {
+  border-color: #6366f1;
+}
+
+.radioInner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6366f1;
+}
+
 @media (max-width: 768px) {
   .cartGrid {
     grid-template-columns: 1fr;

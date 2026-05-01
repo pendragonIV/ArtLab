@@ -1,21 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 :root {
-  --background: #121212;
-  --foreground: #FFFFFF;
-  --accent: #FACC15;
-  --accent-hover: #EAB308;
-  --surface-light: #18181B;
-  --surface-medium: #27272A;
-  --surface-dark: #3F3F46;
-  --text-muted: #A1A1AA;
+  /* Core backgrounds */
+  --background: #08080a;
+  --bg-secondary: #0d0d10;
+  --bg-card: rgba(18, 18, 22, 0.6);
+  --bg-card-hover: rgba(24, 24, 30, 0.8);
+  --bg-surface: rgba(255, 255, 255, 0.04);
+  --bg-surface-hover: rgba(255, 255, 255, 0.08);
+
+  /* Foreground */
+  --foreground: #f4f4f6;
+  --text-secondary: #c0bfd0;
+  --text-muted: #8a8a9a;
+  --text-dim: #55555e;
+
+  /* Accent – Indigo/Purple (primary brand color inspired by Coloso) */
+  --accent: #6366f1;
+  --accent-soft: rgba(99, 102, 241, 0.12);
+  --accent-border: rgba(99, 102, 241, 0.35);
+  --accent-hover: #4f46e5;
+  --accent-glow: rgba(99, 102, 241, 0.5);
+
+  /* Secondary accent – Fuchsia/Pink */
+  --accent2: #d946ef;
+  --accent2-soft: rgba(217, 70, 239, 0.12);
+
+  /* Success / Discount green */
+  --success: #22d3a0;
+  --success-soft: rgba(34, 211, 160, 0.12);
+
+  /* Hot / Warning */
+  --hot: #f97316;
+  --hot-soft: rgba(249, 115, 22, 0.15);
+
+  /* New / Fresh */
+  --new: #ef4444;
+  --new-soft: rgba(239, 68, 68, 0.12);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-medium: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-accent: 0 8px 32px rgba(99, 102, 241, 0.35);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-slow: 0.4s ease;
+
+  /* Legacy compat */
+  --surface-light: rgba(24, 24, 27, 0.4);
+  --surface-medium: rgba(18, 18, 22, 0.6);
+  --surface-dark: #18181b;
+}
+
+/* ─── Reset & Base ─────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 html {
   height: 100%;
   color-scheme: dark;
+  scroll-behavior: smooth;
 }
 
-html,
-body {
+html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
@@ -26,15 +91,10 @@ body {
   flex-direction: column;
   color: var(--foreground);
   background: var(--background);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+  line-height: 1.5;
 }
 
 a {
@@ -51,4 +111,31 @@ button {
 
 input {
   font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+/* ─── Selection ─────────────────────────────────────── */
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: #fff;
 }

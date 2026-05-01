@@ -69,6 +69,11 @@ namespace ArtLab.Backend.Controllers
             }
             else
             {
+                if (user.IsBanned)
+                {
+                    return Forbid("User account is banned.");
+                }
+
                 // Optionally update avatar or name if they changed
                 bool updated = false;
                 if (user.AvatarUrl != request.AvatarUrl)
@@ -110,7 +115,7 @@ namespace ArtLab.Backend.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var jwtString = tokenHandler.WriteToken(token);
 
-            return Ok(new { message = "User synced successfully", userId = user.Id, token = jwtString });
+            return Ok(new { message = "User synced successfully", userId = user.Id, token = jwtString, role = user.Role });
         }
     }
 }

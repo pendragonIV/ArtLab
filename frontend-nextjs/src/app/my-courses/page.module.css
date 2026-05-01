@@ -11,8 +11,8 @@
 
 .title {
   font-size: 32px;
-  font-weight: bold;
-  color: #111;
+  font-weight: 800;
+  color: #fff;
   margin-bottom: 8px;
 }
 
@@ -24,14 +24,15 @@
 .loadingSpinner, .emptyState {
   text-align: center;
   padding: 80px 20px;
-  background: #f9f9f9;
+  background: rgba(24, 24, 27, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 16px;
-  color: #666;
+  color: #a1a1aa;
 }
 
 .emptyState h2 {
   font-size: 24px;
-  color: #111;
+  color: #fff;
   margin-bottom: 12px;
 }
 
@@ -39,16 +40,17 @@
   display: inline-block;
   margin-top: 24px;
   padding: 12px 32px;
-  background: #111;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background 0.2s;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: all 0.2s;
 }
 
 .browseBtn:hover {
-  background: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
 }
 
 .courseGrid {
@@ -58,17 +60,19 @@
 }
 
 .courseCard {
-  background: white;
-  border-radius: 12px;
+  background: rgba(24, 24, 27, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid #eee;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .courseCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .imageWrapper {
@@ -123,15 +127,15 @@
 
 .courseTitle {
   font-size: 18px;
-  font-weight: bold;
-  color: #111;
+  font-weight: 700;
+  color: #fff;
   margin-bottom: 8px;
   line-height: 1.4;
 }
 
 .courseAuthor {
   font-size: 14px;
-  color: #666;
+  color: #a1a1aa;
   margin-bottom: 24px;
 }
 
@@ -142,35 +146,35 @@
 .progressBar {
   width: 100%;
   height: 6px;
-  background: #eee;
-  border-radius: 3px;
+  background: #27272a;
+  border-radius: 99px;
   overflow: hidden;
   margin-bottom: 8px;
 }
 
 .progressFill {
   height: 100%;
-  background: #4f46e5;
-  border-radius: 3px;
+  background: #6366f1;
+  border-radius: 99px;
 }
 
 .progressText {
   font-size: 12px;
-  color: #888;
+  color: #a1a1aa;
 }
 
 .continueBtn {
   width: 100%;
   padding: 12px;
-  background: #f0f0f0;
-  color: #111;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .continueBtn:hover {
-  background: #e0e0e0;
+  background: rgba(99, 102, 241, 0.25);
 }

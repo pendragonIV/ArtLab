@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AddToCartButton from "@/components/AddToCartButton";
+import StickyCountdown from "./StickyCountdown";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -146,6 +147,7 @@ export default async function SeriesDetailPage({
           </aside>
         </div>
       </main>
+      <StickyCountdown />
       <Footer />
     </>
   );

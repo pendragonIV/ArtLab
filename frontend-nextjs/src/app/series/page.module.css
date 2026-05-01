@@ -19,15 +19,18 @@
 
 .main {
   min-height: 100vh;
-  background: #0a0a0a;
-  color: #fff;
+  background: #09090b;
+  color: #ededed;
+  font-family: 'Inter', sans-serif;
 }
 
 /* ---- HERO ---- */
 .hero {
-  background: linear-gradient(135deg, #18181b 0%, #1c1c2e 100%);
-  border-bottom: 1px solid #27272a;
-  padding: 72px 0 64px;
+  background: linear-gradient(180deg, #09090b 0%, rgba(9, 9, 11, 0.8) 100%),
+              radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 60%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 100px 0 80px;
+  position: relative;
 }
 
 .heroInner {
@@ -39,13 +42,17 @@
 
 .heroPill {
   display: inline-block;
-  background: #27272a;
-  color: #a1a1aa;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
   padding: 6px 16px;
   border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  backdrop-filter: blur(10px);
+  margin-bottom: 24px;
 }
 
 .heroTitle {
@@ -84,16 +91,19 @@
 /* ---- SERIES CARD ---- */
 .seriesCard {
   display: flex;
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 20px;
   overflow: hidden;
-  transition: border-color 0.25s, transform 0.25s;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .seriesCard:hover {
-  border-color: #6366f1;
-  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 40px rgba(99, 102, 241, 0.1);
 }
 
 .cardImg {

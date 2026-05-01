@@ -39,8 +39,9 @@ type LessonDetail = {
   courseTitle: string;
   chapterTitle: string;
   videoUrl: string | null;
-  bunnyVideoId: string | null;
-  bunnyEmbedUrl: string | null;
+  vdoCipherVideoId: string | null;
+  vdoCipherOtp: string | null;
+  vdoCipherPlaybackInfo: string | null;
   isLocked: boolean;
 };
 
@@ -136,14 +137,14 @@ export default function LearnPage() {
   const [collapsedChapters, setCollapsedChapters] = useState<Set<number>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // HTML5 video player state (used only when no Bunny video)
+  // HTML5 video player state
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const controlsTimer = useRef<ReturnType<typeof setTimeout>>();
+  const controlsTimer = useRef<NodeJS.Timeout | null>(null);
 
   // User display name for watermark
   // @ts-ignore
@@ -226,7 +227,7 @@ export default function LearnPage() {
 
   const handleMouseMove = () => {
     setShowControls(true);
-    clearTimeout(controlsTimer.current);
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => {
       if (playing) setShowControls(false);
     }, 2500);
@@ -250,7 +251,7 @@ export default function LearnPage() {
   const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   // Determine player mode
-  const useBunny = !!(lesson?.bunnyEmbedUrl);
+  const useVdoCipher = !!(lesson?.vdoCipherOtp && lesson?.vdoCipherPlaybackInfo);
 
   if (loading && !lesson) {
     return <div className={styles.loadingScreen}><div className={styles.spinner} /></div>;
@@ -268,9 +269,9 @@ export default function LearnPage() {
           <span className={styles.navTitle}>{lesson?.title}</span>
         </div>
         <div className={styles.navRight}>
-          {useBunny && (
-            <span className={styles.bunnyBadge}>
-              🐇 Bunny Stream — DRM Protected
+          {useVdoCipher && (
+            <span className={styles.vdoBadge}>
+              🛡️ VdoCipher — Enterprise DRM
             </span>
           )}
           <div className={styles.progressBar}>
@@ -294,17 +295,17 @@ export default function LearnPage() {
               <p>Purchase this course to unlock all content.</p>
               <Link href={`/course/${courseId}`} className={styles.buyBtn}>View Course →</Link>
             </div>
-          ) : useBunny ? (
-            /* ──── BUNNY IFRAME PLAYER (DRM + Adaptive) ──── */
-            <div className={styles.bunnyWrapper}>
+          ) : useVdoCipher ? (
+            /* ──── VDOCIPHER IFRAME PLAYER (Enterprise DRM) ──── */
+            <div className={styles.vdoWrapper}>
               <iframe
-                src={lesson.bunnyEmbedUrl!}
-                className={styles.bunnyFrame}
+                src={`https://player.vdocipher.com/v2/?otp=${lesson.vdoCipherOtp}&playbackInfo=${lesson.vdoCipherPlaybackInfo}`}
+                className={styles.vdoFrame}
                 allowFullScreen
                 allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
                 title={lesson.title}
               />
-              {/* Multi-watermark overlaid on Bunny iframe */}
+              {/* Multi-watermark overlaid on iframe */}
               <MultiWatermark label={userEmail} />
             </div>
           ) : (

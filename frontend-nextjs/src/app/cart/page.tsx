@@ -26,6 +26,7 @@ export default function CartPage() {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<"VNPay" | "MoMo" | "BankTransfer">("VNPay");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -84,15 +85,22 @@ export default function CartPage() {
       const token = session.backendToken;
       const res = await fetch("http://localhost:5149/api/checkout", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ paymentMethod })
       });
       
       if (res.ok) {
         const data = await res.json();
-        alert(`Payment Successful! Order ID: ${data.orderId}. Enjoy your classes!`);
-        setItems([]);
-        // Ideally redirect to /my-courses here
-        window.location.href = "/my-courses";
+        // Redirect to payment gateway URL
+        if (data.paymentUrl) {
+          window.location.href = data.paymentUrl;
+        } else {
+          alert(`Order Created! Order ID: ${data.orderId}`);
+          window.location.href = "/my-courses";
+        }
       } else {
         const errorText = await res.text();
         alert(`Checkout failed: ${errorText}`);
@@ -169,6 +177,40 @@ export default function CartPage() {
                 <span>Total:</span>
                 <span>${totalPrice.toFixed(2)}</span>
               </div>
+              
+              <div className={styles.paymentMethods}>
+                <h3 className={styles.paymentTitle}>Payment Method</h3>
+                <div 
+                  className={`${styles.paymentOption} ${paymentMethod === "VNPay" ? styles.selected : ""}`}
+                  onClick={() => setPaymentMethod("VNPay")}
+                >
+                  <div className={styles.radioCircle}>
+                    {paymentMethod === "VNPay" && <div className={styles.radioInner} />}
+                  </div>
+                  <span>VNPay (Credit/Debit Card)</span>
+                </div>
+                
+                <div 
+                  className={`${styles.paymentOption} ${paymentMethod === "MoMo" ? styles.selected : ""}`}
+                  onClick={() => setPaymentMethod("MoMo")}
+                >
+                  <div className={styles.radioCircle}>
+                    {paymentMethod === "MoMo" && <div className={styles.radioInner} />}
+                  </div>
+                  <span>Ví MoMo</span>
+                </div>
+                
+                <div 
+                  className={`${styles.paymentOption} ${paymentMethod === "BankTransfer" ? styles.selected : ""}`}
+                  onClick={() => setPaymentMethod("BankTransfer")}
+                >
+                  <div className={styles.radioCircle}>
+                    {paymentMethod === "BankTransfer" && <div className={styles.radioInner} />}
+                  </div>
+                  <span>Bank Transfer</span>
+                </div>
+              </div>
+
               <button 
                 className={styles.checkoutBtn} 
                 onClick={handleCheckout}

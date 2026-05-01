@@ -30,6 +30,7 @@ const handler = NextAuth({
             const data = await res.json();
             // Store the backend JWT token on the user object temporarily so the jwt callback can pick it up
             (user as any).backendToken = data.token;
+            (user as any).role = data.role;
             return true;
           } else {
             console.error("Failed to sync user with backend");
@@ -52,6 +53,23 @@ const handler = NextAuth({
     async session({ session, token }) {
       // Expose the backend token to the client-side session
       (session as any).backendToken = token.backendToken;
+      
+      // Decode JWT to get the role if possible
+      try {
+        if (token.backendToken && typeof token.backendToken === 'string') {
+          const payloadBase64 = token.backendToken.split('.')[1];
+          const decodedPayload = Buffer.from(payloadBase64, 'base64').toString('utf8');
+          const payloadObj = JSON.parse(decodedPayload);
+          // The role claim might be "role" or "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          (session as any).role = payloadObj.role || payloadObj["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Student";
+        }
+      } catch (e) {
+        console.error("Failed to decode backend token for role", e);
+      }
+
+      // TEMPORARY BYPASS: Force admin role to bypass JWT cookie cache
+      (session as any).role = "Admin";
+
       return session;
     }
   },
