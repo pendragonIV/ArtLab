@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj": {}
+    "C:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj": {}
   },
   "projects": {
-    "c:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj": {
+    "C:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj",
+        "projectUniqueName": "C:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj",
         "projectName": "ArtLab.Backend",
-        "projectPath": "c:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj",
+        "projectPath": "C:\\Dev\\artlab\\backend-dotnet\\ArtLab.Backend.csproj",
         "packagesPath": "C:\\Users\\NGDA\\.nuget\\packages\\",
-        "outputPath": "c:\\Dev\\artlab\\backend-dotnet\\obj\\",
+        "outputPath": "C:\\Dev\\artlab\\backend-dotnet\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\NGDA\\AppData\\Roaming\\NuGet\\NuGet.Config"

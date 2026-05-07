@@ -17,6 +17,8 @@ namespace ArtLab.Backend.Data
         public DbSet<Enrollment> Enrollments { get; set; }
         public DbSet<Series> Series { get; set; }
         public DbSet<SeriesCourse> SeriesCourses { get; set; }
+        public DbSet<LessonProgress> LessonProgresses { get; set; }
+        public DbSet<Coupon> Coupons { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

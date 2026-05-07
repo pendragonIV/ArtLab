@@ -28,6 +28,11 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"VNPay" | "MoMo" | "BankTransfer">("VNPay");
 
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPercent: number; maxDiscountAmount: number | null } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       setLoading(false);
@@ -89,7 +94,7 @@ export default function CartPage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ paymentMethod })
+        body: JSON.stringify({ paymentMethod, couponCode: appliedCoupon?.code })
       });
       
       if (res.ok) {
@@ -113,7 +118,49 @@ export default function CartPage() {
     }
   };
 
-  const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setApplyingCoupon(true);
+    setCouponError("");
+    
+    try {
+      // @ts-ignore
+      const token = session.backendToken;
+      const res = await fetch("http://localhost:5149/api/coupons/apply", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ code: couponCode })
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setAppliedCoupon(data);
+        setCouponError("");
+      } else {
+        setCouponError(data.message || "Invalid coupon");
+        setAppliedCoupon(null);
+      }
+    } catch (err) {
+      setCouponError("Error applying coupon");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const subtotalPrice = items.reduce((sum, item) => sum + item.price, 0);
+  
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    discountAmount = subtotalPrice * (appliedCoupon.discountPercent / 100);
+    if (appliedCoupon.maxDiscountAmount && discountAmount > appliedCoupon.maxDiscountAmount) {
+      discountAmount = appliedCoupon.maxDiscountAmount;
+    }
+  }
+  
+  const totalPrice = Math.max(0, subtotalPrice - discountAmount);
 
   return (
     <>
@@ -169,9 +216,47 @@ export default function CartPage() {
               <div className={styles.summaryRow}>
                 <span>Discounts:</span>
                 <span className={styles.discount}>
-                  -${(items.reduce((s, i) => s + i.originalPrice, 0) - totalPrice).toFixed(2)}
+                  -${(items.reduce((s, i) => s + i.originalPrice, 0) - subtotalPrice).toFixed(2)}
                 </span>
               </div>
+
+              {/* Coupon Input Section */}
+              <div className={styles.couponSection}>
+                <div className={styles.couponInputGroup}>
+                  <input 
+                    type="text" 
+                    placeholder="Discount Code" 
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    className={styles.couponInput}
+                  />
+                  <button 
+                    onClick={handleApplyCoupon} 
+                    disabled={applyingCoupon || !couponCode.trim()}
+                    className={styles.couponBtn}
+                  >
+                    Apply
+                  </button>
+                </div>
+                {couponError && <div className={styles.couponError}>{couponError}</div>}
+                {appliedCoupon && (
+                  <div className={styles.couponSuccess}>
+                    Coupon applied! (-{appliedCoupon.discountPercent}%)
+                    <button className={styles.removeCouponBtn} onClick={() => {
+                      setAppliedCoupon(null);
+                      setCouponCode("");
+                    }}>Remove</button>
+                  </div>
+                )}
+              </div>
+
+              {appliedCoupon && (
+                <div className={styles.summaryRow}>
+                  <span>Coupon Discount:</span>
+                  <span className={styles.discount}>-${discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className={styles.divider}></div>
               <div className={styles.totalRow}>
                 <span>Total:</span>

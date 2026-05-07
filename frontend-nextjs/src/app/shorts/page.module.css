@@ -465,6 +465,7 @@
   .main {
     grid-template-columns: 1fr;
     padding: 24px 16px;
+    gap: 48px; /* Added gap to prevent player shadow overlapping text below */
   }
 
   .infoPanel {

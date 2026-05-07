@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Script from "next/script";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -146,6 +147,11 @@ export default function LearnPage() {
   const [showControls, setShowControls] = useState(true);
   const controlsTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // VdoCipher & Progress Tracking
+  const [initialProgress, setInitialProgress] = useState(0);
+  const lastSavedTimeRef = useRef(0);
+  const vdoPlayerRef = useRef<any>(null);
+
   // User display name for watermark
   // @ts-ignore
   const userEmail = session?.user?.email ?? session?.user?.name ?? "ArtLab User";
@@ -166,18 +172,84 @@ export default function LearnPage() {
       .catch(console.error);
   }, [courseId, authHeaders]);
 
-  /* Fetch current lesson */
+  /* Fetch current lesson & progress */
   useEffect(() => {
     setLoading(true);
     setPlaying(false);
     setProgress(0);
-    fetch(`http://localhost:5149/api/lessons/${lessonId}`, {
-      headers: authHeaders(),
+    setInitialProgress(0);
+    lastSavedTimeRef.current = 0;
+
+    Promise.all([
+      fetch(`http://localhost:5149/api/lessons/${lessonId}`, { headers: authHeaders() }).then(r => r.json()),
+      fetch(`http://localhost:5149/api/progress/${lessonId}`, { headers: authHeaders() }).then(r => r.ok ? r.json() : { watchedSeconds: 0 })
+    ])
+    .then(([lessonData, progressData]) => {
+      setLesson(lessonData);
+      if (progressData?.watchedSeconds > 0) {
+        setInitialProgress(progressData.watchedSeconds);
+        setProgress(progressData.watchedSeconds);
+      }
+      setLoading(false);
     })
-      .then((r) => r.json())
-      .then((data) => { setLesson(data); setLoading(false); })
-      .catch(() => setLoading(false));
+    .catch(() => setLoading(false));
   }, [lessonId, authHeaders]);
+
+  /* Save progress function */
+  const saveProgress = useCallback((currentTime: number, isCompleted: boolean) => {
+    fetch("http://localhost:5149/api/progress/update", {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lessonId,
+        watchedSeconds: Math.floor(currentTime),
+        isCompleted
+      })
+    }).catch(console.error);
+  }, [lessonId, authHeaders]);
+
+  /* Initialize VdoPlayer */
+  const initVdoPlayer = useCallback(() => {
+    // @ts-ignore
+    if (!window.VdoPlayer || !lesson?.vdoCipherOtp) return;
+    
+    const iframe = document.getElementById("vdo-player-iframe") as HTMLIFrameElement;
+    if (!iframe) return;
+
+    try {
+      // @ts-ignore
+      const player = new window.VdoPlayer({ iframe });
+      vdoPlayerRef.current = player;
+
+      player.addEventListener("timeupdate", (e: any) => {
+        const time = e.currentTime;
+        setProgress(time);
+
+        // Auto-save every 10 seconds
+        if (Math.abs(time - lastSavedTimeRef.current) >= 10) {
+          lastSavedTimeRef.current = time;
+          saveProgress(time, false);
+        }
+
+        if (e.duration && time / e.duration > 0.9) {
+          handleComplete(lessonId);
+          saveProgress(time, true);
+        }
+      });
+    } catch (e) {
+      console.error("VdoPlayer init error:", e);
+    }
+  }, [lesson, initialProgress, saveProgress, handleComplete, lessonId]);
+
+  useEffect(() => {
+    if (lesson?.vdoCipherOtp) {
+      // Small delay to ensure iframe is mounted
+      const t = setTimeout(() => {
+        initVdoPlayer();
+      }, 500);
+      return () => clearTimeout(t);
+    }
+  }, [lesson, initVdoPlayer]);
 
   /* HTML5 video listeners */
   useEffect(() => {
@@ -294,8 +366,10 @@ export default function LearnPage() {
           ) : useVdoCipher ? (
             /* ──── VDOCIPHER IFRAME PLAYER (Enterprise DRM) ──── */
             <div className={styles.vdoWrapper}>
+              <Script src="https://player.vdocipher.com/v2/api.js" strategy="lazyOnload" onLoad={initVdoPlayer} />
               <iframe
-                src={`https://player.vdocipher.com/v2/?otp=${lesson.vdoCipherOtp}&playbackInfo=${lesson.vdoCipherPlaybackInfo}`}
+                id="vdo-player-iframe"
+                src={`https://player.vdocipher.com/v2/?otp=${lesson.vdoCipherOtp}&playbackInfo=${lesson.vdoCipherPlaybackInfo}${initialProgress > 0 ? `&time=${initialProgress}` : ''}`}
                 className={styles.vdoFrame}
                 allowFullScreen
                 allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"

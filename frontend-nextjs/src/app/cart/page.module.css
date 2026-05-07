@@ -286,6 +286,86 @@
   background: #6366f1;
 }
 
+/* ---- COUPON UI ---- */
+.couponSection {
+  margin: 20px 0;
+  padding: 16px 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.couponInputGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.couponInput {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.couponInput:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.couponBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 0 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.couponBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.couponBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.couponError {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.couponSuccess {
+  color: #10b981;
+  font-size: 13px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.removeCouponBtn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.removeCouponBtn:hover {
+  color: #fff;
+}
+
 @media (max-width: 768px) {
   .cartGrid {
     grid-template-columns: 1fr;

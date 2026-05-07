@@ -33,6 +33,7 @@ namespace ArtLab.Backend.Controllers
         public class CheckoutRequest
         {
             public string PaymentMethod { get; set; } = "VNPay"; // "VNPay", "MoMo", "BankTransfer"
+            public string? CouponCode { get; set; }
         }
 
         [HttpPost]
@@ -57,6 +58,30 @@ namespace ArtLab.Backend.Controllers
             {
                 // 2. Calculate Total
                 decimal totalAmount = cartItems.Sum(c => c.Course!.Price);
+                Coupon? appliedCoupon = null;
+
+                // Validate Coupon
+                if (!string.IsNullOrWhiteSpace(request.CouponCode))
+                {
+                    appliedCoupon = await _context.Coupons
+                        .FirstOrDefaultAsync(c => c.Code == request.CouponCode.Trim().ToUpper() && c.IsActive);
+
+                    if (appliedCoupon != null && appliedCoupon.ExpiryDate >= DateTime.UtcNow && 
+                        (appliedCoupon.UsageLimit == 0 || appliedCoupon.UsedCount < appliedCoupon.UsageLimit))
+                    {
+                        decimal discount = totalAmount * (appliedCoupon.DiscountPercent / 100);
+                        if (appliedCoupon.MaxDiscountAmount.HasValue && discount > appliedCoupon.MaxDiscountAmount.Value)
+                        {
+                            discount = appliedCoupon.MaxDiscountAmount.Value;
+                        }
+                        
+                        totalAmount -= discount;
+                        if (totalAmount < 0) totalAmount = 0;
+
+                        // Increment used count
+                        appliedCoupon.UsedCount++;
+                    }
+                }
 
                 // 3. Create Order
                 var order = new Order

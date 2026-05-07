@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, DollarSign, Users, Plus, Star, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
+import { LayoutDashboard, BookOpen, DollarSign, Users, Plus, Star, CheckCircle2, Loader2, Pencil, Trash2, Menu } from "lucide-react";
 import styles from "../admin/page.module.css"; // Reuse admin styles
 
 type TutorStats = {
@@ -32,6 +32,7 @@ export default function TutorDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Profile form state
   const [profile, setProfile] = useState({ headline: "", bio: "", youtubeUrl: "", twitterUrl: "", portfolioImagesJson: "" });
@@ -525,7 +526,8 @@ export default function TutorDashboard() {
 
   return (
     <div className={styles.adminLayout}>
-      <aside className={styles.sidebar}>
+      {sidebarOpen && <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />}
+      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoArea}>
           <Link href="/">
             <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>ArtLab <span style={{color: '#f59e0b'}}>Tutor</span></span>
@@ -555,7 +557,12 @@ export default function TutorDashboard() {
 
       <main className={styles.mainContent}>
         <header className={styles.header}>
-          <h2>{activeTab === 'dashboard' ? 'Studio Overview' : activeTab === 'courses' ? 'My Courses' : 'Instructor Profile'}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button className={styles.menuBtn} onClick={() => setSidebarOpen(true)}>
+              <Menu size={20} />
+            </button>
+            <h2 style={{ margin: 0 }}>{activeTab === 'dashboard' ? 'Studio Overview' : activeTab === 'courses' ? 'My Courses' : 'Instructor Profile'}</h2>
+          </div>
           <div className={styles.userProfile}>
              <span style={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>{session?.user?.name}</span>
             <img src={session?.user?.image || "https://ui-avatars.com/api/?name=" + session?.user?.name} alt="" className={styles.avatar} />
@@ -614,19 +621,19 @@ export default function TutorDashboard() {
                   <tbody>
                     {courses.map(course => (
                       <tr key={course.id}>
-                        <td>#{course.id}</td>
-                        <td style={{ fontWeight: 500 }}>{course.title}</td>
-                        <td><span className={styles.badge}>{course.category}</span></td>
-                        <td>{course.chapterCount} Chapters</td>
-                        <td>${course.price.toFixed(2)} {course.discountPct > 0 && <span style={{ color: '#ef4444', fontSize: '11px', marginLeft: '4px' }}>-{course.discountPct}%</span>}</td>
-                        <td><span style={{ color: '#10b981', fontWeight: 'bold' }}>Published</span></td>
-                        <td style={{ display: 'flex', gap: '8px' }}>
+                        <td data-label="ID">#{course.id}</td>
+                        <td data-label="Title" style={{ fontWeight: 500 }}>{course.title}</td>
+                        <td data-label="Category"><span className={styles.badge}>{course.category}</span></td>
+                        <td data-label="Curriculum">{course.chapterCount} Chapters</td>
+                        <td data-label="Price">${course.price.toFixed(2)} {course.discountPct > 0 && <span style={{ color: '#ef4444', fontSize: '11px', marginLeft: '4px' }}>-{course.discountPct}%</span>}</td>
+                        <td data-label="Status"><span style={{ color: '#10b981', fontWeight: 'bold' }}>Published</span></td>
+                        <td data-label="Actions" style={{ display: 'flex', gap: '8px' }}>
                           <button className={styles.actionBtn} onClick={() => openEditModal(course)}>Edit</button>
                           <button className={styles.actionBtn} onClick={() => {
                             setSelectedCourseId(course.id);
                             fetchCourseChapters(course.id);
                             setActiveTab('curriculum');
-                          }}>Manage Curriculum</button>
+                          }}>Manage</button>
                           <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteCourse(course.id)}>Delete</button>
                         </td>
                       </tr>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Search, ShoppingCart, Menu, Globe, ChevronDown, BookOpen, Palette, Gamepad2, Code, FileVideo, Music, Star, LogOut, User, Check, Layers, Sword, MonitorPlay, Scissors, Flame, Zap, Users } from 'lucide-react';
+import { Search, ShoppingCart, Menu, Globe, ChevronDown, BookOpen, Palette, Gamepad2, Code, FileVideo, Music, Star, LogOut, User, Check, Layers, Sword, MonitorPlay, Scissors, Flame, Zap, Users, X } from 'lucide-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -96,6 +96,7 @@ export default function Header() {
   const [activeCat, setActiveCat] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { t, lang, setLang, currentLangMeta } = useLanguage();
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
@@ -163,8 +164,71 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
+      {/* ─── MOBILE MENU OVERLAY ────────────────────────────── */}
+      {showMobileMenu && (
+        <div className={styles.mobileMenuOverlay}>
+          <div className={styles.mobileMenuHeader}>
+            <div className={styles.logoBox} style={{ margin: 0 }}>
+              Art<span className={styles.accent}>Lab</span><span className={styles.logoDot}>.</span>
+            </div>
+            <button className={styles.mobileMenuClose} onClick={() => setShowMobileMenu(false)}>
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className={styles.mobileNavGroup}>
+            <div className={styles.mobileNavTitle}>Promos & Special</div>
+            {NAV_PROMOS.map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={styles.mobileNavItem}
+                onClick={() => setShowMobileMenu(false)}
+                style={item.highlight ? { color: '#facc15' } : {}}
+              >
+                {item.label}
+                {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
+              </Link>
+            ))}
+          </div>
+
+          <div className={styles.mobileNavGroup}>
+            <div className={styles.mobileNavTitle}>Explore</div>
+            {NAV_NORMAL.map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={styles.mobileNavItem}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          
+          <div className={styles.mobileNavGroup}>
+            <div className={styles.mobileNavTitle}>Categories</div>
+            {CATEGORIES.map(cat => (
+              <Link
+                key={cat.name}
+                href={`/category/${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
+                className={styles.mobileNavItem}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ─── TOP BAR ─────────────────────────────────────────── */}
       <div className={styles.topBar}>
+        {/* Hamburger for Mobile */}
+        <button className={styles.mobileMenuBtn} onClick={() => setShowMobileMenu(true)}>
+          <Menu size={20} />
+        </button>
+
         {/* Logo */}
         <div className={styles.logoBox}>
           <Link href="/">
