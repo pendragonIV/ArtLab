@@ -208,6 +208,16 @@ export default function LearnPage() {
     }).catch(console.error);
   }, [lessonId, authHeaders]);
 
+  const handleComplete = useCallback((id: number) => {
+    setCompletedLessons((prev) => {
+      if (prev.has(id)) return prev;
+      const s = new Set(prev); s.add(id); return s;
+    });
+    fetch(`http://localhost:5149/api/lessons/${id}/complete`, {
+      method: "POST", headers: authHeaders(),
+    }).catch(console.error);
+  }, [authHeaders]);
+
   /* Initialize VdoPlayer */
   const initVdoPlayer = useCallback(() => {
     // @ts-ignore
@@ -218,11 +228,12 @@ export default function LearnPage() {
 
     try {
       // @ts-ignore
-      const player = new window.VdoPlayer({ iframe });
+      const player = window.VdoPlayer.getInstance(iframe);
       vdoPlayerRef.current = player;
 
-      player.addEventListener("timeupdate", (e: any) => {
-        const time = e.currentTime;
+      player.video.addEventListener("timeupdate", () => {
+        const time = player.video.currentTime;
+        const dur = player.video.duration;
         setProgress(time);
 
         // Auto-save every 10 seconds
@@ -231,7 +242,7 @@ export default function LearnPage() {
           saveProgress(time, false);
         }
 
-        if (e.duration && time / e.duration > 0.9) {
+        if (dur && time / dur > 0.9) {
           handleComplete(lessonId);
           saveProgress(time, true);
         }
@@ -272,17 +283,7 @@ export default function LearnPage() {
       v.removeEventListener("timeupdate", onTimeUpdate);
       v.removeEventListener("loadedmetadata", onMeta);
     };
-  }, [lesson?.videoUrl]);
-
-  const handleComplete = useCallback((id: number) => {
-    setCompletedLessons((prev) => {
-      if (prev.has(id)) return prev;
-      const s = new Set(prev); s.add(id); return s;
-    });
-    fetch(`http://localhost:5149/api/lessons/${id}/complete`, {
-      method: "POST", headers: authHeaders(),
-    }).catch(console.error);
-  }, [authHeaders]);
+  }, [lesson?.videoUrl, handleComplete, lessonId]);
 
   const togglePlay = () => {
     const v = videoRef.current;
