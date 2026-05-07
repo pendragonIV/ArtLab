@@ -8,6 +8,12 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Allow large video uploads (up to 2 GB) via Kestrel
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 2_000_000_000; // 2 GB
+});
+
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -64,6 +70,13 @@ if (!string.IsNullOrEmpty(secretKey))
 
 var app = builder.Build();
 
+// Auto-migrate database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -73,6 +86,7 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowNextJs");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, Users, DollarSign, Plus, Video, Upload, CheckCircle2, Loader2 } from "lucide-react";
+import { LayoutDashboard, BookOpen, Users, DollarSign, Video, Upload, CheckCircle2, Loader2, Menu } from "lucide-react";
 import styles from "./page.module.css";
 
 type Stats = {
@@ -37,12 +37,8 @@ export default function AdminDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // New course form state
-  const [newCourse, setNewCourse] = useState({
-    title: "", author: "", category: "", price: "", originalPrice: "", thumbnailUrl: "", isClasscutEnabled: false
-  });
 
   const fetchData = async () => {
     // @ts-ignore
@@ -67,47 +63,14 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // @ts-ignore
-    if (status === "authenticated" && session?.user?.role === "Admin") {
+    const role = (session as any)?.role;
+    if (status === "authenticated" && role === "Admin") {
       fetchData();
-    // @ts-ignore
-    } else if (status === "unauthenticated" || (status === "authenticated" && session?.user?.role !== "Admin")) {
+    } else if (status === "unauthenticated" || (status === "authenticated" && role !== "Admin")) {
       window.location.href = "/";
     }
   }, [status, session]);
 
-  const handleAddCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // @ts-ignore
-      const token = session.backendToken;
-      const res = await fetch("http://localhost:5149/api/admin/courses", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          title: newCourse.title,
-          author: newCourse.author,
-          category: newCourse.category,
-          price: parseFloat(newCourse.price),
-          originalPrice: parseFloat(newCourse.originalPrice),
-          thumbnailUrl: newCourse.thumbnailUrl,
-          isClasscutEnabled: newCourse.isClasscutEnabled
-        })
-      });
-
-      if (res.ok) {
-        alert("Course created successfully!");
-        setShowAddModal(false);
-        setNewCourse({ title: "", author: "", category: "", price: "", originalPrice: "", thumbnailUrl: "", isClasscutEnabled: false });
-        fetchData(); // Refresh list
-      }
-    } catch (err) {
-      alert("Error creating course");
-    }
-  };
 
   const handleDeleteUser = async (id: number) => {
     if (!confirm("Are you sure you want to delete this user? (This will also delete their courses and videos if they are a tutor)")) return;
@@ -169,8 +132,9 @@ export default function AdminDashboard() {
 
   return (
     <div className={styles.adminLayout}>
+      {sidebarOpen && <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />}
       {/* SIDEBAR */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.logoArea}>
           <Link href="/">
             <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>ArtLab <span style={{color: '#6366f1'}}>Admin</span></span>
@@ -179,19 +143,19 @@ export default function AdminDashboard() {
         <nav className={styles.nav}>
           <button 
             className={`${styles.navItem} ${activeTab === 'dashboard' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("dashboard")}
+            onClick={() => { setActiveTab("dashboard"); setSidebarOpen(false); }}
           >
             <LayoutDashboard size={20} /> Dashboard
           </button>
           <button 
             className={`${styles.navItem} ${activeTab === 'users' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("users")}
+            onClick={() => { setActiveTab("users"); setSidebarOpen(false); }}
           >
             <Users size={20} /> Users
           </button>
           <button 
             className={`${styles.navItem} ${activeTab === 'courses' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("courses")}
+            onClick={() => { setActiveTab("courses"); setSidebarOpen(false); }}
           >
             <BookOpen size={20} /> Courses
           </button>
@@ -201,6 +165,9 @@ export default function AdminDashboard() {
       {/* MAIN CONTENT */}
       <main className={styles.mainContent}>
         <header className={styles.header}>
+          <button className={styles.menuBtn} onClick={() => setSidebarOpen(o => !o)} aria-label="Open menu">
+            <Menu size={18} />
+          </button>
           <h2>{activeTab === 'dashboard' ? 'Overview' : activeTab === 'courses' ? 'Course Management' : 'User Management'}</h2>
           <div className={styles.userProfile}>
             <img src={session?.user?.image || ""} alt="" className={styles.avatar} />
@@ -238,9 +205,6 @@ export default function AdminDashboard() {
             <div className={styles.coursesSection}>
               <div className={styles.toolbar}>
                 <input type="text" placeholder="Search courses..." className={styles.searchInput} />
-                <button className={styles.addBtn} onClick={() => setShowAddModal(true)}>
-                  <Plus size={16} /> New Course
-                </button>
               </div>
 
               <div className={styles.tableContainer}>
@@ -259,15 +223,14 @@ export default function AdminDashboard() {
                   <tbody>
                     {courses.map(course => (
                       <tr key={course.id}>
-                        <td>#{course.id}</td>
-                        <td style={{ fontWeight: 500 }}>{course.title}</td>
-                        <td>{course.author}</td>
-                        <td><span className={styles.badge}>{course.category}</span></td>
-                        <td>{course.isClasscutEnabled ? <span style={{ color: '#10b981', fontWeight: 'bold' }}>Yes</span> : <span style={{ color: '#ef4444' }}>No</span>}</td>
-                        <td>${course.price.toFixed(2)}</td>
-                        <td>
-                          <button className={styles.actionBtn}>Edit</button>
-                          <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5', marginLeft: '8px' }} onClick={() => handleDeleteCourse(course.id)}>Delete</button>
+                        <td data-label="ID">#{course.id}</td>
+                        <td data-label="Title" style={{ fontWeight: 500 }}>{course.title}</td>
+                        <td data-label="Author">{course.author}</td>
+                        <td data-label="Category"><span className={styles.badge}>{course.category}</span></td>
+                        <td data-label="Classcut">{course.isClasscutEnabled ? <span style={{ color: '#10b981', fontWeight: 'bold' }}>Yes</span> : <span style={{ color: '#ef4444' }}>No</span>}</td>
+                        <td data-label="Price">${course.price.toFixed(2)}</td>
+                        <td data-label="Actions">
+                          <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteCourse(course.id)}>Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -297,10 +260,10 @@ export default function AdminDashboard() {
                   <tbody>
                     {users.map(user => (
                       <tr key={user.id}>
-                        <td>#{user.id}</td>
-                        <td style={{ fontWeight: 500 }}>{user.name}</td>
-                        <td>{user.email}</td>
-                        <td>
+                        <td data-label="ID">#{user.id}</td>
+                        <td data-label="Name" style={{ fontWeight: 500 }}>{user.name}</td>
+                        <td data-label="Email">{user.email}</td>
+                        <td data-label="Role">
                           <span className={styles.badge} style={{ 
                             background: user.role === 'Admin' ? '#fef2f2' : '#e0e7ff', 
                             color: user.role === 'Admin' ? '#ef4444' : '#4f46e5' 
@@ -308,8 +271,8 @@ export default function AdminDashboard() {
                             {user.role}
                           </span>
                         </td>
-                        <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                        <td>
+                        <td data-label="Joined">{new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td data-label="Actions">
                           {/* @ts-ignore */}
                           <button className={styles.actionBtn} style={{ background: user.isBanned ? '#10b981' : '#f59e0b', color: '#fff', borderColor: 'transparent', marginRight: '8px' }} onClick={() => handleToggleBan(user.id, user.isBanned || false)}>
                             {/* @ts-ignore */}
@@ -327,62 +290,6 @@ export default function AdminDashboard() {
 
         </div>
       </main>
-
-      {/* MODAL FOR NEW COURSE */}
-      {showAddModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3>Create New Course</h3>
-              <button onClick={() => setShowAddModal(false)} className={styles.closeBtn}>&times;</button>
-            </div>
-            <form onSubmit={handleAddCourse} className={styles.form}>
-              <div className={styles.formGroup}>
-                <label>Course Title</label>
-                <input type="text" required value={newCourse.title} onChange={e => setNewCourse({...newCourse, title: e.target.value})} />
-              </div>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Instructor Name</label>
-                  <input type="text" required value={newCourse.author} onChange={e => setNewCourse({...newCourse, author: e.target.value})} />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Category</label>
-                  <select required value={newCourse.category} onChange={e => setNewCourse({...newCourse, category: e.target.value})}>
-                    <option value="">Select Category</option>
-                    <option value="Illustration">Illustration</option>
-                    <option value="3D Art">3D Art</option>
-                    <option value="Concept Art">Concept Art</option>
-                    <option value="Animation">Animation</option>
-                  </select>
-                </div>
-              </div>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Selling Price ($)</label>
-                  <input type="number" required step="0.01" value={newCourse.price} onChange={e => setNewCourse({...newCourse, price: e.target.value})} />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Original Price ($)</label>
-                  <input type="number" required step="0.01" value={newCourse.originalPrice} onChange={e => setNewCourse({...newCourse, originalPrice: e.target.value})} />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label>Thumbnail Image URL</label>
-                <input type="url" required value={newCourse.thumbnailUrl} onChange={e => setNewCourse({...newCourse, thumbnailUrl: e.target.value})} placeholder="https://..." />
-              </div>
-              <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input type="checkbox" id="isClasscutEnabled" checked={newCourse.isClasscutEnabled} onChange={e => setNewCourse({...newCourse, isClasscutEnabled: e.target.checked})} style={{ width: 'auto' }} />
-                <label htmlFor="isClasscutEnabled" style={{ marginBottom: 0, cursor: 'pointer' }}>Enable Classcut (Sell Individual Chapters)</label>
-              </div>
-              <div className={styles.modalFooter}>
-                <button type="button" onClick={() => setShowAddModal(false)} className={styles.cancelBtn}>Cancel</button>
-                <button type="submit" className={styles.submitBtn}>Publish Course</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

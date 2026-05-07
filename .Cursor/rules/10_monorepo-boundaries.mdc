@@ -1,0 +1,47 @@
+---
+id: "rule-monorepo-boundaries"
+name: "Monorepo boundaries (frontend-nextjs / backend-dotnet)"
+description: "Giữ ranh giới rõ giữa frontend Next.js và backend ASP.NET; tránh thay đổi chéo không cần thiết; quy ước chạy dev"
+version: "1.0.0"
+alwaysApply: true
+enabled: true
+priority: 15
+tags: ["monorepo", "boundaries", "nextjs", "dotnet"]
+globs: []
+excludeGlobs: []
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Luôn nạp để tránh làm lẫn frontend/backend."
+language: vi
+---
+
+# Monorepo boundaries
+
+## Cấu trúc repo
+- `frontend-nextjs/`: Next.js 16 + React 19 + next-auth
+- `backend-dotnet/`: ASP.NET Core + EF Core + PostgreSQL
+
+## Quy tắc thay đổi
+- Khi làm UI/route Next.js: ưu tiên thay đổi trong `frontend-nextjs/`.
+- Khi làm API/model/migration: ưu tiên thay đổi trong `backend-dotnet/`.
+- Tránh “tiện tay” chỉnh cả hai phía trong 1 thay đổi nếu không cần (dễ khó review/rollback).
+
+## Secrets & config
+- Không commit secret thật vào repo (OAuth client secret, API keys, payment secrets).
+- Frontend dùng `.env.local` (có thể kèm `.env.example`).
+- Backend dùng `appsettings.Development.json` hoặc env vars cho secret production.
+
+## Lệnh chạy nhanh (nhắc)
+- Frontend: `cd frontend-nextjs && npm run dev`
+- Backend: `cd backend-dotnet && dotnet run`
+- DB: `cd backend-dotnet && docker-compose up -d`

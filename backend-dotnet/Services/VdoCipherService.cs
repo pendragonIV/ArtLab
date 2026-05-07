@@ -36,27 +36,41 @@ namespace ArtLab.Backend.Services
             // 2. Upload file trực tiếp lên Amazon S3 (mà VdoCipher cung cấp qua payload)
             using var formData = new MultipartFormDataContent();
             
-            // Add tất cả các thông số signature
+            // Track which fields have been added from the payload
             bool hasSuccessActionStatus = false;
+            bool hasSuccessActionRedirect = false;
+
+            // Add tất cả các thông số signature từ VdoCipher payload
             foreach (var prop in payload.EnumerateObject())
             {
-                if (prop.Name != "uploadLink")
-                {
-                    if (prop.Name == "success_action_status") hasSuccessActionStatus = true;
-                    
-                    var content = new StringContent(prop.Value.ToString());
-                    content.Headers.ContentType = null; // S3 rejects requests if text/plain is sent
-                    formData.Add(content, prop.Name);
-                }
+                if (prop.Name == "uploadLink") continue;
+
+                if (prop.Name == "success_action_status")   hasSuccessActionStatus = true;
+                if (prop.Name == "success_action_redirect") hasSuccessActionRedirect = true;
+
+                var content = new StringContent(prop.Value.ToString());
+                content.Headers.ContentType = null; // S3 rejects requests if text/plain is sent
+                formData.Add(content, prop.Name);
             }
-            
+
+            // S3 policy điều kiện: ["starts-with", "$success_action_status", ""]
+            // → BẮT BUỘC phải có field này dù VdoCipher không trả về
             if (!hasSuccessActionStatus)
             {
-                var content = new StringContent("201");
-                content.Headers.ContentType = null;
-                formData.Add(content, "success_action_status");
+                var c = new StringContent("201");
+                c.Headers.ContentType = null;
+                formData.Add(c, "success_action_status");
             }
-            
+
+            // S3 policy điều kiện: ["starts-with", "$success_action_redirect", ""]
+            // → BẮT BUỘC phải có field này (giá trị rỗng) để thoả mãn policy
+            if (!hasSuccessActionRedirect)
+            {
+                var c = new StringContent("");
+                c.Headers.ContentType = null;
+                formData.Add(c, "success_action_redirect");
+            }
+
             // File bắt buộc phải add cuối cùng
             var streamContent = new StreamContent(fileStream);
             formData.Add(streamContent, "file", fileName);
@@ -68,7 +82,35 @@ namespace ArtLab.Backend.Services
                 throw new Exception($"VdoCipher S3 Upload failed: {uploadResponse.StatusCode} - {errorContent}");
             }
 
-            return videoId;
+            return videoId!;
+        }
+
+        /// <summary>
+        /// Lấy credentials để browser upload thẳng lên S3 (không qua backend).
+        /// Trả về videoId + toàn bộ clientPayload (uploadLink, policy, signature...).
+        /// </summary>
+        public async Task<(string videoId, JsonElement clientPayload)> GetUploadCredentialsAsync(string title)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Put,
+                $"https://dev.vdocipher.com/api/videos?title={Uri.EscapeDataString(title)}");
+            request.Headers.Add("Authorization", $"Apisecret {_apiKey}");
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                throw new Exception($"VdoCipher API Error: {response.StatusCode} - {err}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            // Parse vào JsonDocument — caller chịu trách nhiệm dispose
+            var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            var videoId = root.GetProperty("videoId").GetString()!;
+            var payload = root.GetProperty("clientPayload").Clone(); // Clone để doc có thể dispose
+            doc.Dispose();
+
+            return (videoId, payload);
         }
 
         public async Task<(string otp, string playbackInfo)> GetPlaybackInfoAsync(string videoId)
@@ -92,6 +134,33 @@ namespace ArtLab.Backend.Services
             var request = new HttpRequestMessage(HttpMethod.Delete, $"https://dev.vdocipher.com/api/videos?videos={videoId}");
             request.Headers.Add("Authorization", $"Apisecret {_apiKey}");
             await _httpClient.SendAsync(request);
+        }
+
+        /// <summary>
+        /// Lấy thời lượng video (giây) từ VdoCipher.
+        /// Trả về 0 nếu video chưa encode xong hoặc API lỗi.
+        /// </summary>
+        public async Task<int> GetVideoDurationSecondsAsync(string videoId)
+        {
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.vdocipher.com/api/videos/{videoId}");
+                request.Headers.Add("Authorization", $"Apisecret {_apiKey}");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode) return 0;
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                // VdoCipher trả về duration tính bằng giây (float)
+                if (root.TryGetProperty("length", out var lengthProp))
+                    return (int)Math.Round(lengthProp.GetDouble());
+
+                return 0;
+            }
+            catch { return 0; }
         }
     }
 }

@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
 
-type Lesson = { id: number; title: string; durationMinutes: number };
+type Lesson = { id: number; title: string; durationSeconds: number };
 type Chapter = { id: number; title: string; orderIndex: number; price: number; lessons: Lesson[] };
 type Course = {
   id: number;

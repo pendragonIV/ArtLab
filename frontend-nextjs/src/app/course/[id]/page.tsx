@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import styles from "./page.module.css";
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
 import AddToCartButton from "@/components/AddToCartButton";
 import Link from "next/link";
 import {
@@ -14,7 +15,7 @@ import CourseCard from "@/components/CourseCard";
 type Lesson = {
   id: number;
   title: string;
-  durationMinutes: number;
+  durationSeconds: number;
   isFreePreview: boolean;
   orderIndex: number;
 };
@@ -61,8 +62,22 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
   const discountPct = course.originalPrice > course.price
     ? Math.round((1 - course.price / course.originalPrice) * 100)
     : 0;
-
-  // Fetch recommended courses
+  // Check enrollment status
+  let isEnrolled = false;
+  try {
+    const session = await getServerSession();
+    if (session?.user?.email) {
+      // Check via backend if enrolled — pass header without token (public endpoint check)
+      const enrollRes = await fetch(
+        `http://localhost:5149/api/courses/${id}/is-enrolled?email=${encodeURIComponent(session.user.email)}`,
+        { cache: 'no-store' }
+      );
+      if (enrollRes.ok) {
+        const enrollData = await enrollRes.json();
+        isEnrolled = enrollData.isEnrolled === true;
+      }
+    }
+  } catch {}
   const recRes = await fetch(`http://localhost:5149/api/courses`, { cache: 'no-store' });
   let recommendedCourses: Course[] = [];
   if (recRes.ok) {
@@ -361,7 +376,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
         <section id="curriculum" className={styles.curriculumBand}>
           <div className={styles.bandInner}>
             <h2 className={styles.sectionTitle}>Course Curriculum</h2>
-            <CurriculumGrid chapters={course.chapters} courseId={course.id} />
+            <CurriculumGrid chapters={course.chapters} courseId={course.id} isEnrolled={isEnrolled} />
           </div>
         </section>
 

@@ -128,3 +128,4 @@ C:\Dev\artlab\backend-dotnet\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.
 C:\Dev\artlab\backend-dotnet\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Dev\artlab\backend-dotnet\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\Dev\artlab\backend-dotnet\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Dev\artlab\backend-dotnet\obj\Debug\net9.0\swae.build.ex.cache

@@ -1,0 +1,46 @@
+---
+id: "rule-backend-ef-migrations"
+name: "Backend EF Core migrations"
+description: "Chuẩn tạo/review migrations + snapshot; tránh migration bẩn; an toàn dữ liệu"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 68
+tags: ["backend", "dotnet", "ef-core", "migrations", "database"]
+globs:
+  - "backend-dotnet/Migrations/**/*.cs"
+  - "backend-dotnet/Models/**/*.cs"
+  - "backend-dotnet/**/*.cs"
+excludeGlobs:
+  - "backend-dotnet/bin/**"
+  - "backend-dotnet/obj/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Áp dụng khi đụng Models/DbContext/Migrations."
+language: vi
+---
+
+# Backend EF Core migrations
+
+## Khi nào tạo migration
+- Chỉ tạo migration khi schema cần đổi.
+- Tránh nhiều migration lặt vặt cho 1 mục tiêu.
+
+## Naming
+- Tên migration mô tả intent rõ.
+
+## Review
+- Review migration + `AppDbContextModelSnapshot.cs` để tránh thay đổi không liên quan.
+
+## An toàn dữ liệu
+- Rename/alter cột: cân nhắc dữ liệu cũ, default value, và plan migrate dữ liệu nếu cần.

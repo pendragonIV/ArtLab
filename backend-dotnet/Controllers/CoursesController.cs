@@ -118,6 +118,19 @@ namespace ArtLab.Backend.Controllers
             };
         }
 
+        // GET: api/courses/{id}/is-enrolled?email={email}
+        [HttpGet("{id}/is-enrolled")]
+        public async Task<IActionResult> IsEnrolled(int id, [FromQuery] string? email)
+        {
+            if (string.IsNullOrEmpty(email)) return Ok(new { isEnrolled = false });
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return Ok(new { isEnrolled = false });
+
+            var enrolled = await _context.Enrollments.AnyAsync(e => e.UserId == user.Id && e.CourseId == id);
+            var isInstructor = await _context.Courses.AnyAsync(c => c.Id == id && c.InstructorId == user.Id);
+            return Ok(new { isEnrolled = enrolled || isInstructor });
+        }
+
         // POST: api/courses/seed-curriculum
         [HttpPost("seed-curriculum")]
         public async Task<IActionResult> SeedCurriculum()
@@ -135,9 +148,9 @@ namespace ArtLab.Backend.Controllers
                         OrderIndex = 1,
                         Lessons = new List<Lesson>
                         {
-                            new Lesson { Title = "Welcome to the Course", DurationMinutes = 5, IsFreePreview = true, OrderIndex = 1 },
-                            new Lesson { Title = "Tools & Software Setup", DurationMinutes = 12, IsFreePreview = true, OrderIndex = 2 },
-                            new Lesson { Title = "Basic Concepts", DurationMinutes = 20, OrderIndex = 3 }
+                            new Lesson { Title = "Welcome to the Course", DurationSeconds = 5, IsFreePreview = true, OrderIndex = 1 },
+                            new Lesson { Title = "Tools & Software Setup", DurationSeconds = 12, IsFreePreview = true, OrderIndex = 2 },
+                            new Lesson { Title = "Basic Concepts", DurationSeconds = 20, OrderIndex = 3 }
                         }
                     });
 
@@ -147,9 +160,9 @@ namespace ArtLab.Backend.Controllers
                         OrderIndex = 2,
                         Lessons = new List<Lesson>
                         {
-                            new Lesson { Title = "Understanding Lighting", DurationMinutes = 35, OrderIndex = 1 },
-                            new Lesson { Title = "Color Theory Application", DurationMinutes = 42, OrderIndex = 2 },
-                            new Lesson { Title = "Composition Rules", DurationMinutes = 28, OrderIndex = 3 }
+                            new Lesson { Title = "Understanding Lighting", DurationSeconds = 35, OrderIndex = 1 },
+                            new Lesson { Title = "Color Theory Application", DurationSeconds = 42, OrderIndex = 2 },
+                            new Lesson { Title = "Composition Rules", DurationSeconds = 28, OrderIndex = 3 }
                         }
                     });
 
@@ -159,8 +172,8 @@ namespace ArtLab.Backend.Controllers
                         OrderIndex = 3,
                         Lessons = new List<Lesson>
                         {
-                            new Lesson { Title = "Project 1: Sketching", DurationMinutes = 45, OrderIndex = 1 },
-                            new Lesson { Title = "Project 1: Final Render", DurationMinutes = 55, OrderIndex = 2 }
+                            new Lesson { Title = "Project 1: Sketching", DurationSeconds = 45, OrderIndex = 1 },
+                            new Lesson { Title = "Project 1: Final Render", DurationSeconds = 55, OrderIndex = 2 }
                         }
                     });
 

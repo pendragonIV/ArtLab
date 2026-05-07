@@ -15,7 +15,7 @@ import styles from "./page.module.css";
 type LessonItem = {
   id: number;
   title: string;
-  durationMinutes: number;
+  durationSeconds: number;
   isFreePreview: boolean;
   orderIndex: number;
   isLocked: boolean;
@@ -31,7 +31,7 @@ type ChapterItem = {
 type LessonDetail = {
   id: number;
   title: string;
-  durationMinutes: number;
+  durationSeconds: number;
   isFreePreview: boolean;
   orderIndex: number;
   chapterId: number;
@@ -269,11 +269,7 @@ export default function LearnPage() {
           <span className={styles.navTitle}>{lesson?.title}</span>
         </div>
         <div className={styles.navRight}>
-          {useVdoCipher && (
-            <span className={styles.vdoBadge}>
-              🛡️ VdoCipher — Enterprise DRM
-            </span>
-          )}
+
           <div className={styles.progressBar}>
             <div className={styles.progressFill} style={{ width: `${progressPct}%` }} />
           </div>
@@ -319,8 +315,8 @@ export default function LearnPage() {
             >
               <video
                 ref={videoRef}
-                key={lesson?.videoUrl ?? ""}
-                src={lesson?.videoUrl ?? ""}
+                key={lesson?.videoUrl || "empty"}
+                src={lesson?.videoUrl || undefined}
                 className={styles.video}
                 controlsList="nodownload noremoteplayback"
                 disablePictureInPicture
@@ -446,7 +442,7 @@ export default function LearnPage() {
                                 <span className={styles.lessonItemTitle}>{l.title}</span>
                                 <span className={styles.lessonItemMeta}>
                                   {l.isFreePreview && <span className={styles.previewTag}>Preview</span>}
-                                  {l.durationMinutes}m
+                                  {l.durationSeconds ? `${Math.floor(l.durationSeconds / 60)}:${(l.durationSeconds % 60).toString().padStart(2, '0')}` : '0m'}
                                 </span>
                               </div>
                             </button>

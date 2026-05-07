@@ -8,7 +8,7 @@ namespace ArtLab.Backend.Models
         
         public required string Title { get; set; }
         
-        public int DurationMinutes { get; set; }
+        public int DurationSeconds { get; set; }
         
         public bool IsFreePreview { get; set; } = false;
         

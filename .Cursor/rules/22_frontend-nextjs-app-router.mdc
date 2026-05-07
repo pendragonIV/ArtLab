@@ -1,0 +1,48 @@
+---
+id: "rule-frontend-nextjs-app-router"
+name: "Frontend Next.js App Router (Next 16)"
+description: "Chuẩn App Router: RSC-first, route handlers, loading/error/not-found, perf (next/image), và lưu ý Next 16"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 65
+tags: ["frontend", "nextjs", "app-router", "rsc", "performance"]
+globs:
+  - "frontend-nextjs/src/app/**/*.{ts,tsx,js,jsx}"
+  - "frontend-nextjs/src/app/**/route.{ts,js}"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Next.js 16 có breaking changes; ưu tiên đọc doc local khi đụng API nhạy cảm."
+language: vi
+---
+
+# Frontend Next.js App Router (Next 16)
+
+## Không đoán theo Next cũ
+- Khi thay đổi routing/data fetching/route handlers: đọc guide liên quan trong `frontend-nextjs/node_modules/next/dist/docs/`.
+
+## RSC-first
+- Server Component mặc định; `"use client"` đặt thấp nhất.
+
+## Route Handlers
+- Validate input, status code đúng nghĩa, không leak internal error.
+
+## UX files
+- Dùng `loading.tsx` / `error.tsx` / `not-found.tsx` khi phù hợp.
+
+## Performance
+- Ưu tiên `next/image`.
+- Dynamic import cho component nặng, không critical.

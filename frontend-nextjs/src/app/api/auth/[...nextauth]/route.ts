@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { backendFetch } from "@/lib/http";
 
 const handler = NextAuth({
   providers: [
@@ -11,12 +12,14 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
+        const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
         try {
-          const res = await fetch("http://localhost:5149/api/auth/google-sync", {
+          const res = await backendFetch("/api/auth/google-sync", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-Sync-Secret": process.env.BACKEND_SYNC_SECRET || ""
+              "X-Sync-Secret": process.env.BACKEND_SYNC_SECRET || "",
+              "X-Request-Id": requestId,
             },
             body: JSON.stringify({
               email: user.email,
@@ -24,7 +27,8 @@ const handler = NextAuth({
               avatarUrl: user.image,
               providerId: account.providerAccountId
             }),
-          });
+            timeoutMs: 8000,
+          }, { name: "next-auth.signIn.google-sync", requestId });
 
           if (res.ok) {
             const data = await res.json();
@@ -33,11 +37,14 @@ const handler = NextAuth({
             (user as any).role = data.role;
             return true;
           } else {
-            console.error("Failed to sync user with backend");
+            console.error("[next-auth] google-sync failed", {
+              requestId,
+              status: res.status,
+            });
             return false;
           }
         } catch (error) {
-          console.error("Error connecting to backend during sign-in:", error);
+          console.error("[next-auth] google-sync threw", { requestId, error });
           return false;
         }
       }

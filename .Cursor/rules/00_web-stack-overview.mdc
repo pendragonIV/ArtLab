@@ -1,0 +1,37 @@
+---
+id: "rule-web-stack-overview"
+name: "Web stack overview (ArtLab)"
+description: "Tóm tắt stack web của ArtLab + nguyên tắc chung khi làm fullstack"
+version: "1.0.0"
+alwaysApply: true
+enabled: true
+priority: 5
+tags: ["web", "overview", "artlab", "nextjs", "dotnet"]
+globs: []
+excludeGlobs: []
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Luôn nạp để AI không đoán sai stack."
+language: vi
+---
+
+# Web stack overview (ArtLab)
+
+## Repo layout
+- `frontend-nextjs/`: Next.js **16.2.x**, React **19**, TypeScript **strict**, ESLint `core-web-vitals`.
+- `backend-dotnet/`: ASP.NET Core + EF Core + PostgreSQL (Docker).
+
+## Nguyên tắc khi làm fullstack
+- Ưu tiên sửa đúng layer: UI ở frontend, business/data ở backend.
+- Không hardcode secrets/URLs; dùng env/config.
+- Thay đổi auth/payment phải review kỹ, không để “temporary bypass” lọt vào production.

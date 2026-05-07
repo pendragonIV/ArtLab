@@ -1,0 +1,46 @@
+---
+id: "rule-backend-structure"
+name: "Backend structure (backend-dotnet)"
+description: "Quy ước folder/layer cho backend-dotnet: Controllers/Models/Services/Migrations + DI"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 54
+tags: ["backend", "structure", "dotnet", "architecture"]
+globs:
+  - "backend-dotnet/**/*.cs"
+  - "backend-dotnet/**/*.csproj"
+excludeGlobs:
+  - "backend-dotnet/bin/**"
+  - "backend-dotnet/obj/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Bám theo cấu trúc repo hiện có."
+language: vi
+---
+
+# Backend structure (backend-dotnet)
+
+## Folders & trách nhiệm
+- `Controllers/`: HTTP endpoints.
+- `Models/`: EF entities và model liên quan.
+- `Services/`: business logic / integrations.
+- `Migrations/`: EF migrations + snapshot.
+
+## Layer boundaries
+- Controller mỏng; service chứa nghiệp vụ.
+- Không expose entity EF trực tiếp ra response.
+
+## DI
+- Đăng ký dependencies trong `Program.cs`.
+- Tránh global static/service locator.

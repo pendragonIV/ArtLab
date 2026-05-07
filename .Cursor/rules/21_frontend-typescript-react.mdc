@@ -1,0 +1,47 @@
+---
+id: "rule-frontend-typescript-react"
+name: "Frontend TypeScript + React conventions"
+description: "Chuẩn TypeScript strict, React component patterns, import order, và boundaries server/client cho frontend-nextjs"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 55
+tags: ["frontend", "typescript", "react", "nextjs"]
+globs:
+  - "frontend-nextjs/src/**/*.{ts,tsx,js,jsx}"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Repo dùng TS strict + alias @/."
+language: vi
+---
+
+# Frontend TypeScript + React conventions
+
+## TypeScript
+- Strict; tránh `any`. Nếu bị block bởi third-party, cô lập ở 1 chỗ và không lan ra toàn codebase.
+- Dữ liệu từ bên ngoài (API/env/querystring): parse vào `unknown` rồi validate/type guard.
+
+## React
+- Function components.
+- Ưu tiên named exports (trừ nơi framework bắt buộc).
+- Props type đặt tên `ComponentNameProps`.
+
+## Server/Client boundary
+- Mặc định Server Component; chỉ `"use client"` khi cần state/effect/event/browser APIs.
+- Không “kéo” nhiều thứ vào client chỉ vì 1 chỗ interactive.
+
+## Imports
+- Thứ tự: framework → third-party → internal (`@/...`) → relative.

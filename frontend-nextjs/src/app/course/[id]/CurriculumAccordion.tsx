@@ -8,7 +8,7 @@ import styles from "./page.module.css";
 type Lesson = {
   id: number;
   title: string;
-  durationMinutes: number;
+  durationSeconds: number;
   isFreePreview: boolean;
 };
 
@@ -37,6 +37,13 @@ export default function CurriculumAccordion({ chapters, courseId }: { chapters: 
   if (!chapters || chapters.length === 0) {
     return <p style={{ color: '#a1a1aa' }}>Curriculum is being updated.</p>;
   }
+
+  const fmtDuration = (seconds: number | null | undefined) => {
+    const s = Math.max(0, Math.floor(seconds ?? 0));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${r.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className={styles.curriculum}>
@@ -74,7 +81,7 @@ export default function CurriculumAccordion({ chapters, courseId }: { chapters: 
                     
                     <div className={styles.lessonMeta}>
                       {lesson.isFreePreview && <span className={styles.freeBadge}>Preview</span>}
-                      <span className={styles.lessonDuration}>{lesson.durationMinutes} min</span>
+                      <span className={styles.lessonDuration}>{fmtDuration(lesson.durationSeconds)}</span>
                     </div>
                   </Link>
                 ))}

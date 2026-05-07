@@ -238,6 +238,27 @@ namespace ArtLab.Backend.Controllers
             return Ok(course.Chapters.OrderBy(ch => ch.OrderIndex));
         }
 
+        // ── PATCH: api/tutor/chapters/{id}/price ──────────────────────────────
+        /// <summary>Cập nhật giá Classcut cho một chapter.</summary>
+        [HttpPatch("chapters/{id}/price")]
+        public async Task<IActionResult> UpdateChapterPrice(int id, [FromBody] ChapterPriceDto dto)
+        {
+            var userId = GetUserId();
+            var chapter = await _context.Chapters
+                .Include(ch => ch.Course)
+                .FirstOrDefaultAsync(ch => ch.Id == id);
+
+            if (chapter == null) return NotFound();
+            if (chapter.Course!.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
+
+            chapter.Price = dto.Price;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { chapterId = id, price = chapter.Price });
+        }
+
+        public class ChapterPriceDto { public decimal Price { get; set; } }
+
         // ── POST: api/tutor/chapters/{chapterId}/lessons ───────────────────────
         [HttpPost("chapters/{chapterId}/lessons")]
         public async Task<IActionResult> AddLesson(int chapterId, [FromBody] LessonDto dto)
@@ -253,7 +274,7 @@ namespace ArtLab.Backend.Controllers
                 Title = dto.Title,
                 IsFreePreview = dto.IsFreePreview,
                 OrderIndex = dto.OrderIndex,
-                DurationMinutes = dto.DurationMinutes,
+                DurationSeconds = dto.DurationSeconds,
                 VdoCipherVideoId = ""
             };
             _context.Lessons.Add(lesson);
@@ -273,43 +294,117 @@ namespace ArtLab.Backend.Controllers
             lesson.Title = dto.Title;
             lesson.IsFreePreview = dto.IsFreePreview;
             lesson.OrderIndex = dto.OrderIndex;
-            lesson.DurationMinutes = dto.DurationMinutes;
+            lesson.DurationSeconds = dto.DurationSeconds;
             await _context.SaveChangesAsync();
             return Ok(lesson);
         }
 
-        // ── POST: api/tutor/lessons/{lessonId}/upload ──────────────────────────
-        [HttpPost("lessons/{lessonId}/upload")]
-        public async Task<IActionResult> UploadVideo(int lessonId, IFormFile file)
+        // ── GET: api/tutor/lessons/{lessonId}/upload-credentials ──────────────
+        /// <summary>
+        /// Bước 1: Lấy S3 credentials để browser upload thẳng lên VdoCipher S3.
+        /// Backend không xử lý file — chỉ gọi VdoCipher API lấy signed policy.
+        /// </summary>
+        [HttpGet("lessons/{lessonId}/upload-credentials")]
+        public async Task<IActionResult> GetUploadCredentials(int lessonId)
         {
             var userId = GetUserId();
-            var lesson = await _context.Lessons.Include(l => l.Chapter).ThenInclude(c => c.Course).FirstOrDefaultAsync(l => l.Id == lessonId);
-            
+            var lesson = await _context.Lessons
+                .Include(l => l.Chapter).ThenInclude(c => c.Course)
+                .FirstOrDefaultAsync(l => l.Id == lessonId);
+
             if (lesson == null) return NotFound("Lesson not found.");
             if (lesson.Chapter.Course.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
-            if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
 
             try
             {
-                // Delete existing video if any
-                if (!string.IsNullOrEmpty(lesson.VdoCipherVideoId))
+                var (videoId, payload) = await _vdoCipherService.GetUploadCredentialsAsync(lesson.Title);
+
+                // Trả về credentials kèm videoId để frontend dùng upload + attach
+                return Ok(new
                 {
-                    await _vdoCipherService.DeleteVideoAsync(lesson.VdoCipherVideoId);
-                }
-
-                using var stream = file.OpenReadStream();
-                var videoId = await _vdoCipherService.UploadVideoAsync(lesson.Title, stream, file.FileName);
-                
-                // Save VdoCipherVideoId
-                lesson.VdoCipherVideoId = videoId;
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Upload triggered successfully", videoId = videoId });
+                    videoId,
+                    uploadLink    = payload.GetProperty("uploadLink").GetString(),
+                    policy        = payload.GetProperty("policy").GetString(),
+                    key           = payload.GetProperty("key").GetString(),
+                    xAmzSignature = payload.GetProperty("x-amz-signature").GetString(),
+                    xAmzAlgorithm = payload.GetProperty("x-amz-algorithm").GetString(),
+                    xAmzDate      = payload.GetProperty("x-amz-date").GetString(),
+                    xAmzCredential= payload.GetProperty("x-amz-credential").GetString(),
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Upload failed", details = ex.Message });
+                return StatusCode(500, new { error = "Failed to get upload credentials", details = ex.Message });
             }
+        }
+
+        // ── POST: api/tutor/lessons/{lessonId}/attach-video ───────────────────
+        /// <summary>
+        /// Bước 2: Sau khi browser upload xong lên S3, gọi endpoint này để lưu videoId vào DB.
+        /// </summary>
+        [HttpPost("lessons/{lessonId}/attach-video")]
+        public async Task<IActionResult> AttachVideo(int lessonId, [FromBody] AttachVideoDto dto)
+        {
+            var userId = GetUserId();
+            var lesson = await _context.Lessons
+                .Include(l => l.Chapter).ThenInclude(c => c.Course)
+                .FirstOrDefaultAsync(l => l.Id == lessonId);
+
+            if (lesson == null) return NotFound("Lesson not found.");
+            if (lesson.Chapter.Course.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
+            if (string.IsNullOrWhiteSpace(dto.VideoId)) return BadRequest("videoId is required.");
+
+            // Xóa video cũ trên VdoCipher nếu có
+            if (!string.IsNullOrEmpty(lesson.VdoCipherVideoId))
+            {
+                try { await _vdoCipherService.DeleteVideoAsync(lesson.VdoCipherVideoId); }
+                catch { /* ignore if already deleted */ }
+            }
+
+            lesson.VdoCipherVideoId = dto.VideoId;
+
+            var durationSeconds = await _vdoCipherService.GetVideoDurationSecondsAsync(dto.VideoId);
+            if (durationSeconds > 0)
+                lesson.DurationSeconds = durationSeconds;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Video attached successfully.",
+                videoId = dto.VideoId,
+                durationSeconds = lesson.DurationSeconds,
+                durationSet = durationSeconds > 0
+            });
+        }
+
+        public class AttachVideoDto { public required string VideoId { get; set; } }
+
+        // ── POST: api/tutor/lessons/{lessonId}/sync-duration ──────────────────
+        /// <summary>
+        /// Đồng bộ duration từ VdoCipher (gọi sau khi encode xong ~2-5 phút).
+        /// </summary>
+        [HttpPost("lessons/{lessonId}/sync-duration")]
+        public async Task<IActionResult> SyncDuration(int lessonId)
+        {
+            var userId = GetUserId();
+            var lesson = await _context.Lessons
+                .Include(l => l.Chapter).ThenInclude(c => c.Course)
+                .FirstOrDefaultAsync(l => l.Id == lessonId);
+
+            if (lesson == null) return NotFound();
+            if (lesson.Chapter.Course.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
+            if (string.IsNullOrEmpty(lesson.VdoCipherVideoId)) return BadRequest("No video attached.");
+
+            var durationSeconds = await _vdoCipherService.GetVideoDurationSecondsAsync(lesson.VdoCipherVideoId);
+            if (durationSeconds > 0)
+            {
+                lesson.DurationSeconds = durationSeconds;
+                await _context.SaveChangesAsync();
+                return Ok(new { durationSeconds = lesson.DurationSeconds, synced = true });
+            }
+
+            return Ok(new { durationSeconds = 0, synced = false, message = "Video may still be encoding." });
         }
 
         // ── DELETE: api/tutor/lessons/{lessonId}/video ─────────────────────────
@@ -334,6 +429,72 @@ namespace ArtLab.Backend.Controllers
             {
                 return StatusCode(500, new { error = "Failed to delete video", details = ex.Message });
             }
+        }
+
+        // ── PUT: api/tutor/chapters/{chapterId} ────────────────────────────────
+        [HttpPut("chapters/{chapterId}")]
+        public async Task<IActionResult> UpdateChapter(int chapterId, [FromBody] ChapterDto dto)
+        {
+            var userId = GetUserId();
+            var chapter = await _context.Chapters.Include(ch => ch.Course).FirstOrDefaultAsync(ch => ch.Id == chapterId);
+            if (chapter == null) return NotFound();
+            if (chapter.Course!.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
+
+            chapter.Title = dto.Title;
+            if (dto.Price > 0) chapter.Price = dto.Price; // Support optional price update
+            // Note: OrderIndex update could be added here if needed
+
+            await _context.SaveChangesAsync();
+            return Ok(chapter);
+        }
+
+        // ── DELETE: api/tutor/chapters/{chapterId} ─────────────────────────────
+        [HttpDelete("chapters/{chapterId}")]
+        public async Task<IActionResult> DeleteChapter(int chapterId)
+        {
+            var userId = GetUserId();
+            var chapter = await _context.Chapters
+                .Include(ch => ch.Course)
+                .Include(ch => ch.Lessons)
+                .FirstOrDefaultAsync(ch => ch.Id == chapterId);
+
+            if (chapter == null) return NotFound();
+            if (chapter.Course!.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
+
+            // Delete videos from VdoCipher
+            foreach (var lesson in chapter.Lessons)
+            {
+                if (!string.IsNullOrEmpty(lesson.VdoCipherVideoId))
+                {
+                    try { await _vdoCipherService.DeleteVideoAsync(lesson.VdoCipherVideoId); } catch { /* ignore */ }
+                }
+            }
+
+            _context.Chapters.Remove(chapter);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Chapter deleted successfully" });
+        }
+
+        // ── DELETE: api/tutor/lessons/{lessonId} ───────────────────────────────
+        [HttpDelete("lessons/{lessonId}")]
+        public async Task<IActionResult> DeleteLesson(int lessonId)
+        {
+            var userId = GetUserId();
+            var lesson = await _context.Lessons
+                .Include(l => l.Chapter).ThenInclude(c => c.Course)
+                .FirstOrDefaultAsync(l => l.Id == lessonId);
+
+            if (lesson == null) return NotFound();
+            if (lesson.Chapter.Course.InstructorId != userId && !User.IsInRole("Admin")) return Forbid();
+
+            if (!string.IsNullOrEmpty(lesson.VdoCipherVideoId))
+            {
+                try { await _vdoCipherService.DeleteVideoAsync(lesson.VdoCipherVideoId); } catch { /* ignore */ }
+            }
+
+            _context.Lessons.Remove(lesson);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Lesson deleted successfully" });
         }
 
         // ── DTOs ───────────────────────────────────────────────────────────────
@@ -375,7 +536,7 @@ namespace ArtLab.Backend.Controllers
             public required string Title { get; set; }
             public bool IsFreePreview { get; set; }
             public int OrderIndex { get; set; }
-            public int DurationMinutes { get; set; }
+            public int DurationSeconds { get; set; }
         }
     }
 }

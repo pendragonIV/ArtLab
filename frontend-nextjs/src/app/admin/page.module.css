@@ -14,6 +14,26 @@
   flex-direction: column;
 }
 
+.sidebarOverlay {
+  display: none;
+}
+
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.menuBtn:active {
+  transform: translateY(1px);
+}
+
 .logoArea {
   padding: 24px;
   border-bottom: 1px solid #1e293b;
@@ -167,7 +187,8 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -326,4 +347,148 @@
   color: white;
   font-weight: 500;
   cursor: pointer;
+}
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 16px;
+  }
+  .contentArea {
+    padding: 16px;
+  }
+  .searchInput {
+    width: 100%;
+    max-width: 520px;
+  }
+  .table th, .table td {
+    padding: 14px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .adminLayout {
+    height: 100dvh;
+  }
+
+  .menuBtn {
+    display: inline-flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(88vw, 320px);
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .sidebarOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 55;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    gap: 12px;
+  }
+
+  .header h2 {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  /* Table -> cards */
+  .table {
+    min-width: 0;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .tableContainer {
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .table tr {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .table td {
+    border-bottom: 1px solid #f1f5f9;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 6px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    flex: 0 0 auto;
+  }
+
+  .table td > * {
+    max-width: 100%;
+  }
+
+  /* Keep actions as a button row */
+  .table td[data-label="Actions"] {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .table td[data-label="Actions"]::before {
+    width: 100%;
+  }
+
+  .table td:last-child {
+    border-bottom: none;
+  }
+
+  .actionBtn {
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
 }

@@ -1,0 +1,60 @@
+---
+id: "rule-git-commit-standards"
+name: "Chuẩn hóa Git Commit Messages"
+description: "Quy tắc viết commit message theo Conventional Commits (tiếng Việt), dễ trace và review"
+version: "1.0.0"
+alwaysApply: true
+enabled: true
+priority: 12
+tags: ["git", "commit", "convention"]
+globs: []
+excludeGlobs: []
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Port từ swordidle. Dùng chung cho mọi repo để commit history sạch."
+language: vi
+---
+
+# Chuẩn hóa Git Commit Messages
+
+## Format
+```
+<type>: <short description>
+
+<optional detailed description>
+```
+
+## Quy tắc chung
+- Commit message **bằng tiếng Việt**.
+- Dòng đầu **ngắn gọn** (khoảng ≤ 80 ký tự).
+- `type` là bắt buộc; 1 commit chỉ có 1 `type`.
+- Nếu cần mô tả chi tiết: thêm body sau 1 dòng trống.
+- Nếu thay đổi quá lớn/khó chọn type: cân nhắc tách thành nhiều commit nhỏ.
+
+## Types (gợi ý)
+- `feat`: tính năng mới
+- `fix`: sửa bug
+- `refactor`: refactor không đổi behavior
+- `style`: format/style, không đổi logic
+- `test`: thêm/sửa test
+- `docs`: tài liệu
+- `build`: build/deps/runtime config
+- `chore`: việc lặt vặt (tooling, config)
+- `perf`: tối ưu hiệu năng
+- `ci`: CI config
+- `revert`: revert commit
+
+## Checklist trước khi commit
+- [ ] Message đúng type và tiếng Việt
+- [ ] Một commit = một mục tiêu thay đổi
+- [ ] Không commit secrets / debug bypass

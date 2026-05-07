@@ -1,0 +1,47 @@
+---
+id: "rule-quality-testing"
+name: "Quality + Testing gates (web)"
+description: "Checklist chất lượng và nguyên tắc testing cho thay đổi web (frontend) và API (backend)"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 90
+tags: ["quality", "testing", "lint", "ci"]
+globs:
+  - "frontend-nextjs/src/**/*.{ts,tsx,js,jsx}"
+  - "backend-dotnet/**/*.cs"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+  - "backend-dotnet/bin/**"
+  - "backend-dotnet/obj/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Dùng như checklist trước khi kết luận xong việc."
+language: vi
+---
+
+# Quality + Testing gates (web)
+
+## Frontend
+- Chạy `npm run lint` khi thay đổi đáng kể.
+- Sau khi sửa UI: dùng skill `visual-qa-testing`.
+- Không để hydration warnings/lỗi runtime.
+
+## Backend
+- Không đổi API contract im lặng (breaking change) nếu frontend đang dùng.
+- Với migration: đảm bảo chạy được `dotnet ef database update` trên DB dev.
+
+## Quy tắc chung
+- Không commit secrets/keys.
+- Không để “temporary bypass” (auth/role/payment) mà không có cờ dev rõ ràng.

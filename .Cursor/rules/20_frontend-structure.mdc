@@ -1,0 +1,51 @@
+---
+id: "rule-frontend-structure"
+name: "Frontend structure (frontend-nextjs)"
+description: "Quy ước tổ chức thư mục/file cho frontend Next.js App Router + colocate + alias imports"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 52
+tags: ["frontend", "structure", "nextjs", "organization"]
+globs:
+  - "frontend-nextjs/src/**/*"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Bám theo thực tế repo: `src/app`, `src/components`, `src/contexts`, `src/lib`, CSS Modules."
+language: vi
+---
+
+# Frontend structure (frontend-nextjs)
+
+## App Router
+- Routes: `frontend-nextjs/src/app/**`.
+- File chuẩn: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`, `route.ts`.
+- Code chỉ phục vụ 1 route: colocate dưới route segment đó.
+
+## Components
+- Component dùng lại: `frontend-nextjs/src/components/`.
+- CSS Modules colocate: `ComponentName.module.css` hoặc `page.module.css` cạnh file TSX.
+
+## Contexts / Providers
+- Contexts: `frontend-nextjs/src/contexts/`.
+- Root providers: `frontend-nextjs/src/components/Providers.tsx` gọi từ `src/app/layout.tsx`.
+
+## Lib
+- Helpers/utilities: `frontend-nextjs/src/lib/`.
+- Tránh đặt browser-only API trong file có thể bị import bởi Server Components.
+
+## Imports
+- Dùng alias `@/` (tsconfig paths) thay vì relative import dài.

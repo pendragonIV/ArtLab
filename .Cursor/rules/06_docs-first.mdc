@@ -1,0 +1,43 @@
+---
+id: "rule-docs-first"
+name: "Đọc Docs trước khi làm (ArtLab)"
+description: "Trước khi implement/sửa: đọc Docs/ (workflow/architecture/rules/infra) và xác định impact frontend-nextjs/backend-dotnet"
+version: "1.0.0"
+alwaysApply: true
+enabled: true
+priority: 18
+tags: ["docs", "workflow", "onboarding", "web"]
+globs: ["**/*"]
+excludeGlobs: []
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Port ý tưởng từ swordidle nhưng đổi path theo ArtLab."
+language: vi
+---
+
+# Đọc Docs trước khi làm (ArtLab)
+
+## Khi áp dụng
+- Bất kỳ yêu cầu **thêm/sửa/refactor/debug** trong repo.
+
+## Tài liệu cần ưu tiên đọc
+- `SETUP.md` (cài đặt/chạy dev)
+- `Docs/PROJECT_ARCHITECTURE.md` (kiến trúc)
+- `Docs/WORKFLOW.md` (workflow)
+- `Docs/PROJECT_RULES.md` (quy ước)
+- `Docs/INFRASTRUCTURE.md` (hạ tầng)
+
+## Quy trình
+1. Xác định thay đổi thuộc `frontend-nextjs/` hay `backend-dotnet/` (hoặc cả hai).
+2. Đọc doc liên quan trước khi code để không phá kiến trúc/quy ước.
+3. Nếu doc thiếu/không khớp thực tế: ghi nhận và xử lý theo rule `07_docs-sync.mdc`.

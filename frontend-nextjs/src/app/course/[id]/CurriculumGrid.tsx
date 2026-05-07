@@ -7,7 +7,7 @@ import Link from 'next/link';
 type Lesson = {
   id: number;
   title: string;
-  durationMinutes: number;
+  durationSeconds: number;
   isFreePreview: boolean;
   orderIndex: number;
 };
@@ -19,7 +19,7 @@ type Chapter = {
   lessons: Lesson[];
 };
 
-export default function CurriculumGrid({ chapters, courseId }: { chapters: Chapter[], courseId: number }) {
+export default function CurriculumGrid({ chapters, courseId, isEnrolled }: { chapters: Chapter[], courseId: number, isEnrolled?: boolean }) {
   if (!chapters || chapters.length === 0) return <p style={{ color: '#a1a1aa' }}>No curriculum available yet.</p>;
 
   return (
@@ -34,14 +34,14 @@ export default function CurriculumGrid({ chapters, courseId }: { chapters: Chapt
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
             {chapter.lessons.map((lesson) => (
               <Link 
-                href={lesson.isFreePreview ? `/learn/${courseId}/${lesson.id}` : '#'}
+                href={(isEnrolled || lesson.isFreePreview) ? `/learn/${courseId}/${lesson.id}` : '#'}
                 key={lesson.id} 
                 style={{ 
                   background: '#18181b', border: '1px solid #27272a', borderRadius: '12px', 
                   padding: '20px', textDecoration: 'none', transition: 'all 0.2s',
                   display: 'flex', flexDirection: 'column', gap: '12px',
-                  cursor: lesson.isFreePreview ? 'pointer' : 'default',
-                  opacity: lesson.isFreePreview ? 1 : 0.7
+                  cursor: (isEnrolled || lesson.isFreePreview) ? 'pointer' : 'default',
+                  opacity: (isEnrolled || lesson.isFreePreview) ? 1 : 0.6
                 }}
                 className="curriculumCard"
               >
@@ -49,6 +49,8 @@ export default function CurriculumGrid({ chapters, courseId }: { chapters: Chapt
                   <span style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: 600 }}>Lesson {lesson.orderIndex}</span>
                   {lesson.isFreePreview ? (
                     <span style={{ fontSize: '10px', fontWeight: 800, color: '#000', background: '#4ade80', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>Preview</span>
+                  ) : isEnrolled ? (
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#4f46e5', background: 'rgba(99,102,241,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>Enrolled</span>
                   ) : (
                     <Lock size={14} color="#71717a" />
                   )}
@@ -58,7 +60,7 @@ export default function CurriculumGrid({ chapters, courseId }: { chapters: Chapt
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#71717a', fontSize: '13px', marginTop: 'auto' }}>
                   <Play size={14} />
-                  <span>{lesson.durationMinutes} min</span>
+                  <span>{lesson.durationSeconds ? `${Math.floor(lesson.durationSeconds / 60)}:${(lesson.durationSeconds % 60).toString().padStart(2, '0')}` : '0m'}</span>
                 </div>
               </Link>
             ))}

@@ -1,0 +1,52 @@
+---
+id: "rule-frontend-env-endpoints"
+name: "Frontend env + endpoints (no hardcoded localhost)"
+description: "Chuẩn hoá biến môi trường frontend, cách cấu hình backend base URL, và cấm hardcode localhost/API URLs trong code"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 72
+tags: ["frontend", "env", "config", "security", "next-auth", "api"]
+globs:
+  - "frontend-nextjs/src/**/*.{ts,tsx,js,jsx}"
+  - "frontend-nextjs/.env*"
+  - "frontend-nextjs/next.config.*"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Mục tiêu: dễ deploy và tránh bug khi đổi môi trường."
+language: vi
+---
+
+# Frontend env + endpoints
+
+## Cấm hardcode URL môi trường
+- Không hardcode các URL như `http://localhost:5149` / `http://localhost:3000` trong code (kể cả trong next-auth callbacks).
+- Luôn đi qua env/config để deploy được staging/prod.
+
+## Chuẩn biến môi trường (gợi ý dùng trong repo)
+- `NEXTAUTH_URL`: URL của frontend (dev: `http://localhost:3000`)
+- `NEXTAUTH_SECRET`: secret cho next-auth (không commit)
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`: OAuth (không commit)
+- `BACKEND_SYNC_SECRET`: secret gọi backend sync (không commit)
+- **NÊN CÓ**: `BACKEND_BASE_URL` (dev: `http://localhost:5149`) để thay cho hardcode backend URL
+
+## Fail-fast vs placeholder
+- Với secret quan trọng (OAuth secret, sync secret): ưu tiên **fail-fast** (throw/return error rõ ràng) hơn là dùng placeholder im lặng.
+- Nếu cần “degrade” trong dev: phải **có cờ dev rõ ràng** và không thể bật nhầm production.
+
+## Public vs server-only env
+- Biến bắt đầu bằng `NEXT_PUBLIC_` sẽ bị expose ra client bundle.
+- Secrets chỉ dùng server-side (route handlers / server components) và không có `NEXT_PUBLIC_`.

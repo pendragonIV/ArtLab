@@ -48,8 +48,13 @@ namespace ArtLab.Backend.Controllers
                 var userId = TryGetUserId();
                 if (userId.HasValue)
                 {
+                    // Check enrollment OR instructor ownership
                     canWatch = await _context.Enrollments
                         .AnyAsync(e => e.UserId == userId.Value && e.CourseId == courseId);
+
+                    if (!canWatch)
+                        canWatch = await _context.Courses
+                            .AnyAsync(c => c.Id == courseId && c.InstructorId == userId.Value);
                 }
             }
 
@@ -66,7 +71,7 @@ namespace ArtLab.Backend.Controllers
             {
                 lesson.Id,
                 lesson.Title,
-                lesson.DurationMinutes,
+                lesson.DurationSeconds,
                 lesson.IsFreePreview,
                 lesson.OrderIndex,
                 lesson.ChapterId,
@@ -92,30 +97,58 @@ namespace ArtLab.Backend.Controllers
             {
                 isEnrolled = await _context.Enrollments
                     .AnyAsync(e => e.UserId == userId.Value && e.CourseId == courseId);
+
+                // Instructors can also watch their own course lessons
+                if (!isEnrolled)
+                    isEnrolled = await _context.Courses
+                        .AnyAsync(c => c.Id == courseId && c.InstructorId == userId.Value);
             }
 
-            var chapters = await _context.Chapters
+            var chapterEntities = await _context.Chapters
                 .Include(ch => ch.Lessons.OrderBy(l => l.OrderIndex))
                 .Where(ch => ch.CourseId == courseId)
                 .OrderBy(ch => ch.OrderIndex)
-                .Select(ch => new
-                {
-                    ch.Id,
-                    ch.Title,
-                    ch.OrderIndex,
-                    Lessons = ch.Lessons.Select(l => new
-                    {
-                        l.Id,
-                        l.Title,
-                        l.DurationMinutes,
-                        l.IsFreePreview,
-                        l.OrderIndex,
-                        l.VdoCipherVideoId,
-                        HasVdoCipherVideo = l.VdoCipherVideoId != null && l.VdoCipherVideoId != "",
-                        IsLocked = !l.IsFreePreview && !isEnrolled
-                    })
-                })
                 .ToListAsync();
+
+            bool dbUpdated = false;
+            foreach (var ch in chapterEntities)
+            {
+                foreach (var l in ch.Lessons)
+                {
+                    if (l.DurationSeconds < 10 && !string.IsNullOrEmpty(l.VdoCipherVideoId))
+                    {
+                        var durationSeconds = await _vdoCipher.GetVideoDurationSecondsAsync(l.VdoCipherVideoId);
+                        if (durationSeconds > 0)
+                        {
+                            l.DurationSeconds = durationSeconds;
+                            dbUpdated = true;
+                        }
+                    }
+                }
+            }
+
+            if (dbUpdated)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            var chapters = chapterEntities.Select(ch => new
+            {
+                ch.Id,
+                ch.Title,
+                ch.OrderIndex,
+                Lessons = ch.Lessons.Select(l => new
+                {
+                    l.Id,
+                    l.Title,
+                    l.DurationSeconds,
+                    l.IsFreePreview,
+                    l.OrderIndex,
+                    l.VdoCipherVideoId,
+                    HasVdoCipherVideo = !string.IsNullOrEmpty(l.VdoCipherVideoId),
+                    IsLocked = !l.IsFreePreview && !isEnrolled
+                })
+            }).ToList();
 
             return Ok(new { IsEnrolled = isEnrolled, Chapters = chapters });
         }

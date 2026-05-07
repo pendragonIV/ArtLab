@@ -1,0 +1,47 @@
+---
+id: "rule-backend-api-conventions"
+name: "Backend API conventions (ASP.NET)"
+description: "Chuẩn controller/service, DTOs, status codes, validation, logging cho backend-dotnet"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 62
+tags: ["backend", "dotnet", "aspnet", "api", "validation"]
+globs:
+  - "backend-dotnet/**/*.cs"
+excludeGlobs:
+  - "backend-dotnet/bin/**"
+  - "backend-dotnet/obj/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Áp dụng cho C# trong backend."
+language: vi
+---
+
+# Backend API conventions (ASP.NET)
+
+## Controller boundaries
+- Controller lo HTTP; service lo nghiệp vụ.
+
+## DTOs
+- Không expose entity EF trực tiếp; dùng DTO cho request/response.
+
+## Status codes
+- 200/201 success; 400/422 validation; 401/403 auth; 404 not found; 409 conflict.
+
+## Validation & errors
+- Validate sớm; message rõ.
+- Không leak stacktrace/connection string ra client.
+
+## Logging
+- Tránh log PII/secrets; log đủ context để debug.

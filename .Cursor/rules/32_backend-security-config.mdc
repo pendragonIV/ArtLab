@@ -1,0 +1,47 @@
+---
+id: "rule-backend-security-config"
+name: "Backend security + config"
+description: "Chuẩn secrets/config/JWT/CORS/logging cho backend-dotnet"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 66
+tags: ["backend", "dotnet", "security", "config", "jwt", "cors"]
+globs:
+  - "backend-dotnet/Program.cs"
+  - "backend-dotnet/appsettings*.json"
+  - "backend-dotnet/**/*.cs"
+excludeGlobs:
+  - "backend-dotnet/bin/**"
+  - "backend-dotnet/obj/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Áp dụng khi thay đổi auth/config backend."
+language: vi
+---
+
+# Backend security + config
+
+## Secrets
+- Không commit secret thật trong `appsettings.json`.
+- Dùng `appsettings.Development.json` (local) và env vars/secret manager cho production.
+
+## JWT/Auth
+- Validate issuer/audience/expiry đúng chuẩn.
+- Không tin role/claims do client tự khai.
+
+## CORS
+- Chỉ allow origin cần thiết; tránh `AllowAnyOrigin` khi dùng credentials.
+
+## Logging
+- Không log PII/secrets.

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import styles from './FeaturedCourses.module.css';
 import CourseCard from './CourseCard';
+import { backendFetch } from '@/lib/http';
 
 // Define the type for the course data returned from the backend
 type Course = {
@@ -19,12 +20,12 @@ type Course = {
 export default async function FeaturedCourses() {
   let courses: Course[] = [];
   try {
-    const res = await fetch('http://localhost:5149/api/courses', { cache: 'no-store' });
+    const res = await backendFetch('/api/courses', { cache: 'no-store' }, { name: 'FeaturedCourses' });
     if (res.ok) {
       courses = await res.json();
     }
   } catch (error) {
-    console.error("Failed to fetch courses:", error);
+    console.error("[FeaturedCourses] fetch failed:", error);
   }
 
   if (courses.length === 0) {

@@ -1,0 +1,44 @@
+---
+id: "rule-frontend-ui-ux-a11y"
+name: "Frontend UI/UX + Accessibility"
+description: "Baseline UI/UX + a11y cho frontend: semantic HTML, keyboard/focus, loading/empty/error states, responsive"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 58
+tags: ["frontend", "ui", "ux", "a11y", "accessibility", "responsive"]
+globs:
+  - "frontend-nextjs/src/**/*.{tsx,jsx}"
+  - "frontend-nextjs/src/**/*.module.css"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Áp dụng cho UI code trong frontend."
+language: vi
+---
+
+# Frontend UI/UX + Accessibility
+
+## Semantic & a11y
+- Clickable phải là `button`/`a` đúng nghĩa hoặc có role + keyboard handling chuẩn.
+- Ảnh: có `alt` (decorative → alt rỗng).
+- Form: có `label` hoặc `aria-label`.
+- Keyboard navigation + focus state rõ ràng.
+
+## UX states
+- Loading / empty / error states luôn được nghĩ đến và render hợp lý.
+
+## Responsive
+- Mobile-first; tránh layout phụ thuộc fixed width/height.

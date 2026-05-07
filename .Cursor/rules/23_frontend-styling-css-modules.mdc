@@ -1,0 +1,43 @@
+---
+id: "rule-frontend-styling-css-modules"
+name: "Frontend styling: CSS Modules"
+description: "Chuẩn CSS Modules trong frontend-nextjs: colocate, naming, tránh global leak"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 50
+tags: ["frontend", "styling", "css-modules", "nextjs"]
+globs:
+  - "frontend-nextjs/src/**/*.module.css"
+  - "frontend-nextjs/src/**/*.{ts,tsx,js,jsx}"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Repo dùng CSS Modules rộng rãi."
+language: vi
+---
+
+# Frontend styling: CSS Modules
+
+## Colocate
+- `Component.tsx` ↔ `Component.module.css` (khi cần).
+- Route: `page.tsx` ↔ `page.module.css`.
+
+## Naming
+- lowerCamelCase cho class names.
+- Tránh selector quá sâu phụ thuộc DOM.
+
+## Global CSS
+- `globals.css` chỉ để base/reset/tokens; không nhét style theo feature.

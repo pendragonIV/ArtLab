@@ -1,0 +1,44 @@
+---
+id: "rule-frontend-auth-nextauth"
+name: "Frontend auth: next-auth"
+description: "Chuẩn next-auth route handler: env/secrets, backend sync, session/role an toàn (không bypass prod)"
+version: "1.0.0"
+alwaysApply: false
+enabled: true
+priority: 70
+tags: ["frontend", "auth", "next-auth", "security", "env"]
+globs:
+  - "frontend-nextjs/src/app/api/auth/**/route.ts"
+excludeGlobs:
+  - "frontend-nextjs/node_modules/**"
+  - "frontend-nextjs/.next/**"
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Repo dùng next-auth v4. Không để placeholder secrets/bypass role lọt production."
+language: vi
+---
+
+# Frontend auth: next-auth
+
+## Env & secrets
+- Không hardcode secret/key thật trong code.
+- Nếu thiếu env quan trọng (OAuth client secret, BACKEND_SYNC_SECRET): fail-fast hoặc degrade rõ ràng chỉ trong dev.
+- Không log token/cookie/PII.
+
+## Backend sync
+- Không hardcode base URL theo localhost trong code (dùng env/config).
+- Có timeout và xử lý lỗi rõ ràng.
+
+## Session & role
+- Không “force role/admin bypass” nếu không có cờ dev rõ ràng và đảm bảo không bật nhầm production.
+- Decode token phải an toàn: validate shape, handle parse errors.

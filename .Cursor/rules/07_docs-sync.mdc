@@ -1,0 +1,43 @@
+---
+id: "rule-docs-sync"
+name: "Đồng bộ Docs khi thay đổi (ArtLab)"
+description: "Sau khi implement/sửa hành vi/kiến trúc: cập nhật Docs/ cho khớp với code và quy trình"
+version: "1.0.0"
+alwaysApply: true
+enabled: true
+priority: 19
+tags: ["docs", "maintenance", "changelog", "web"]
+globs: ["**/*"]
+excludeGlobs: []
+scope: "project"
+services: ["*"]
+appliesTo: ["code", "chat"]
+match: ""
+variables: {}
+rules: []
+examples: []
+references: []
+commands: []
+owners: ["devgo2003"]
+createdAt: "2026-05-07T00:00:00Z"
+updatedAt: "2026-05-07T00:00:00Z"
+notes: "Đồng bộ doc là một phần của định nghĩa 'xong việc'."
+language: vi
+---
+
+# Đồng bộ Docs khi thay đổi (ArtLab)
+
+## Khi áp dụng
+- Sau khi thay đổi **API contract**, **auth**, **payment**, **DB schema/migrations**, hoặc **luồng UI quan trọng**.
+- Khi thay đổi cấu trúc thư mục, workflow, hoặc cách chạy dev.
+
+## Cập nhật ở đâu
+- Setup/run: `SETUP.md`
+- Kiến trúc: `Docs/PROJECT_ARCHITECTURE.md`
+- Workflow: `Docs/WORKFLOW.md`
+- Quy ước: `Docs/PROJECT_RULES.md`
+- Hạ tầng: `Docs/INFRASTRUCTURE.md`
+
+## Nguyên tắc
+- Doc phải mô tả **đúng** behavior mới, không chỉ “ý định”.
+- Nếu thay đổi là breaking change: ghi rõ impact và bước migrate.

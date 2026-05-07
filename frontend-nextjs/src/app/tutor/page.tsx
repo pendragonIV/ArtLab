@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, DollarSign, Users, Plus, Star, CheckCircle2, Loader2 } from "lucide-react";
+import { LayoutDashboard, BookOpen, DollarSign, Users, Plus, Star, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import styles from "../admin/page.module.css"; // Reuse admin styles
 
 type TutorStats = {
@@ -17,6 +17,8 @@ type Course = {
   title: string;
   category: string;
   price: number;
+  originalPrice: number;
+  thumbnailUrl: string;
   isClasscutEnabled: boolean;
   createdAt: string;
   chapterCount: number;
@@ -41,16 +43,34 @@ export default function TutorDashboard() {
     level: "Basic~Advanced", audioLanguage: "English", subtitleLanguage: "English, Vietnamese", includesMaterials: true
   });
 
+  // Edit course modal
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", category: "Illustration", price: "", originalPrice: "", thumbnailUrl: "", isClasscutEnabled: false });
+  const [isDraggingThumb, setIsDraggingThumb] = useState(false);
+
   // Video upload & curriculum state
-  type LessonWithStatus = { id: number; title: string; isFreePreview: boolean; durationMinutes: number; vdoCipherVideoId?: string; };
-  type ChapterWithLessons = { id: number; title: string; lessons: LessonWithStatus[]; };
+  type LessonWithStatus = { id: number; title: string; isFreePreview: boolean; durationSeconds: number; vdoCipherVideoId?: string; };
+  type ChapterWithLessons = { id: number; title: string; price: number; orderIndex: number; lessons: LessonWithStatus[]; };
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([]);
+  const [editingChapterPrice, setEditingChapterPrice] = useState<{id: number, price: number} | null>(null);
+  const [editingChapterTitle, setEditingChapterTitle] = useState<{id: number, title: string} | null>(null);
+  const [editingLesson, setEditingLesson] = useState<{id: number, title: string} | null>(null);
   const [uploadingLessonId, setUploadingLessonId] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Record<number, string>>({}); // lessonId -> status msg
   const [uploadPercent, setUploadPercent] = useState<Record<number, number>>({}); // lessonId -> 0-100
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeUploadLesson, setActiveUploadLesson] = useState<LessonWithStatus | null>(null);
+  // Add Chapter modal
+  const [showAddChapterModal, setShowAddChapterModal] = useState(false);
+  const [newChapterTitle, setNewChapterTitle] = useState("");
+  // Add Lesson
+  const [addingLessonChapterId, setAddingLessonChapterId] = useState<number | null>(null);
+  const [newLessonTitle, setNewLessonTitle] = useState("");
+  // Portfolio drag & drop
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [portfolioUrlInput, setPortfolioUrlInput] = useState("");
+
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -176,6 +196,46 @@ export default function TutorDashboard() {
     }
   };
 
+  const openEditModal = (course: Course) => {
+    setEditingCourse(course);
+    setEditForm({
+      title: course.title,
+      category: course.category,
+      price: String(course.price),
+      originalPrice: String(course.originalPrice ?? ""),
+      thumbnailUrl: course.thumbnailUrl ?? "",
+      isClasscutEnabled: course.isClasscutEnabled,
+    });
+  };
+
+  const handleEditCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCourse) return;
+    try {
+      const token = (session as any).backendToken;
+      const res = await fetch(`http://localhost:5149/api/tutor/courses/${editingCourse.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: editForm.title,
+          category: editForm.category,
+          price: parseFloat(editForm.price) || 0,
+          originalPrice: parseFloat(editForm.originalPrice) || 0,
+          thumbnailUrl: editForm.thumbnailUrl || undefined,
+          isClasscutEnabled: editForm.isClasscutEnabled,
+        }),
+      });
+      if (res.ok) {
+        setEditingCourse(null);
+        fetchData();
+      } else {
+        alert("Failed to save changes.");
+      }
+    } catch {
+      alert("Error saving course.");
+    }
+  };
+
   const fetchCourseChapters = async (courseId: number) => {
     const token = (session as any)?.backendToken;
     const res = await fetch(`http://localhost:5149/api/tutor/courses/${courseId}/curriculum`, {
@@ -187,64 +247,259 @@ export default function TutorDashboard() {
     }
   };
 
+  const handleAddChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCourseId || !newChapterTitle.trim()) return;
+    const token = (session as any)?.backendToken;
+    const res = await fetch(`http://localhost:5149/api/tutor/courses/${selectedCourseId}/chapters`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ title: newChapterTitle, price: 0, sortOrder: chapters.length })
+    });
+    if (res.ok) {
+      setShowAddChapterModal(false);
+      setNewChapterTitle("");
+      fetchCourseChapters(selectedCourseId);
+    } else {
+      alert("Failed to add chapter");
+    }
+  };
+
+  const handleUpdateChapterPrice = async (chapterId: number, newPrice: number) => {
+    const token = (session as any)?.backendToken;
+    try {
+      const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}/price`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ price: newPrice })
+      });
+      if (res.ok) {
+        setEditingChapterPrice(null);
+        if (selectedCourseId) fetchCourseChapters(selectedCourseId);
+      } else {
+        alert("Failed to update chapter price");
+      }
+    } catch {
+      alert("Error updating chapter price");
+    }
+  };
+
+  const handleAddLesson = async (chapterId: number) => {
+    if (!newLessonTitle.trim()) return;
+    const token = (session as any)?.backendToken;
+    const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}/lessons`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ title: newLessonTitle, isFreePreview: false, orderIndex: 0, durationSeconds: 0 })
+    });
+    if (res.ok) {
+      setAddingLessonChapterId(null);
+      setNewLessonTitle("");
+      if (selectedCourseId) fetchCourseChapters(selectedCourseId);
+    } else {
+      alert("Failed to add lesson");
+    }
+  };
+
+  const handleUpdateChapterTitle = async (chapterId: number, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    const token = (session as any)?.backendToken;
+    try {
+      const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: newTitle, price: 0, sortOrder: 0 })
+      });
+      if (res.ok) {
+        setEditingChapterTitle(null);
+        if (selectedCourseId) fetchCourseChapters(selectedCourseId);
+      }
+    } catch {}
+  };
+
+  const handleDeleteChapter = async (chapterId: number) => {
+    if (!confirm("Are you sure you want to delete this chapter and all its lessons?")) return;
+    const token = (session as any)?.backendToken;
+    try {
+      const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok && selectedCourseId) fetchCourseChapters(selectedCourseId);
+    } catch {}
+  };
+
+  const handleUpdateLessonTitle = async (lesson: any, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    const token = (session as any)?.backendToken;
+    try {
+      const res = await fetch(`http://localhost:5149/api/tutor/lessons/${lesson.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: newTitle, isFreePreview: lesson.isFreePreview, orderIndex: lesson.orderIndex || 0, durationSeconds: lesson.durationSeconds || 0 })
+      });
+      if (res.ok) {
+        setEditingLesson(null);
+        if (selectedCourseId) fetchCourseChapters(selectedCourseId);
+      }
+    } catch {}
+  };
+
+  const handleDeleteLesson = async (lessonId: number) => {
+    if (!confirm("Are you sure you want to delete this lesson?")) return;
+    const token = (session as any)?.backendToken;
+    try {
+      const res = await fetch(`http://localhost:5149/api/tutor/lessons/${lessonId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok && selectedCourseId) fetchCourseChapters(selectedCourseId);
+    } catch {}
+  };
+
   const handleVideoUpload = async (lessonId: number, file: File) => {
     const token = (session as any)?.backendToken;
     if (!token) { alert("Not authenticated"); return; }
 
     setUploadingLessonId(lessonId);
     setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
-    setUploadProgress(p => ({ ...p, [lessonId]: "Preparing..." }));
+    setUploadProgress(p => ({ ...p, [lessonId]: "Getting upload credentials..." }));
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    await new Promise<void>((resolve) => {
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          setUploadPercent(p => ({ ...p, [lessonId]: pct }));
-          setUploadProgress(p => ({ ...p, [lessonId]: pct < 100 ? `Uploading... ${pct}%` : "Processing on VdoCipher..." }));
-        }
-      });
-
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          setUploadProgress(p => ({ ...p, [lessonId]: "✅ Done! Encoding in progress..." }));
-          setUploadPercent(p => ({ ...p, [lessonId]: 100 }));
-          if (selectedCourseId) fetchCourseChapters(selectedCourseId);
-        } else {
-          setUploadProgress(p => ({ ...p, [lessonId]: `❌ Error: ${xhr.responseText}` }));
-          setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
-        }
-        setUploadingLessonId(null);
-        setActiveUploadLesson(null);
-        resolve();
-      });
-
-      xhr.addEventListener("error", () => {
-        setUploadProgress(p => ({ ...p, [lessonId]: "❌ Network error" }));
+    try {
+      // ── Bước 1: Lấy S3 credentials từ backend ─────────────────────────────
+      let credRes: Response;
+      try {
+        credRes = await fetch(
+          `http://localhost:5149/api/tutor/lessons/${lessonId}/upload-credentials`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch {
+        setUploadProgress(p => ({ ...p, [lessonId]: "❌ Cannot connect to server" }));
         setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
         setUploadingLessonId(null);
         setActiveUploadLesson(null);
-        resolve();
+        return;
+      }
+
+      if (!credRes.ok) {
+        let errMsg = `Server error ${credRes.status}`;
+        try { const e = await credRes.json(); errMsg = e.details || e.error || errMsg; } catch {}
+        setUploadProgress(p => ({ ...p, [lessonId]: `❌ ${errMsg}` }));
+        setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
+        setUploadingLessonId(null);
+        setActiveUploadLesson(null);
+        return;
+      }
+      const creds = await credRes.json();
+      setUploadProgress(p => ({ ...p, [lessonId]: "Uploading to VdoCipher..." }));
+
+      // ── Bước 2: Browser upload thẳng lên S3 của VdoCipher ─────────────────
+      await new Promise<void>((resolve) => {
+        const formData = new FormData();
+        // Thứ tự fields PHẢI theo đúng S3 policy (text fields trước, file cuối)
+        formData.append("policy",            creds.policy);
+        formData.append("key",               creds.key);
+        formData.append("x-amz-signature",   creds.xAmzSignature);
+        formData.append("x-amz-algorithm",   creds.xAmzAlgorithm);
+        formData.append("x-amz-date",        creds.xAmzDate);
+        formData.append("x-amz-credential",  creds.xAmzCredential);
+        formData.append("success_action_status",   "201");
+        formData.append("success_action_redirect", "");
+        formData.append("file", file); // file phải là field cuối cùng
+
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            setUploadPercent(p => ({ ...p, [lessonId]: pct }));
+            setUploadProgress(p => ({ ...p, [lessonId]: pct < 100 ? `Uploading... ${pct}%` : "Processing on VdoCipher..." }));
+          }
+        });
+
+        xhr.addEventListener("load", async () => {
+          if (xhr.status === 201) {
+            setUploadProgress(p => ({ ...p, [lessonId]: "Saving..." }));
+            // ── Bước 3: Báo backend lưu videoId vào DB ──────────────────────
+            try {
+              const attachRes = await fetch(
+                `http://localhost:5149/api/tutor/lessons/${lessonId}/attach-video`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ videoId: creds.videoId }),
+                }
+              );
+              if (attachRes.ok) {
+                const attachData = await attachRes.json();
+                if (attachData.durationSet) {
+                  // Duration đã có ngay (ít khi xảy ra)
+                  setUploadProgress(p => ({ ...p, [lessonId]: `✅ Done! ${Math.floor((attachData.durationSeconds ?? 0) / 60)}m` }));
+                } else {
+                  setUploadProgress(p => ({ ...p, [lessonId]: "✅ Uploaded! ⚙️ Encoding..." }));
+                  // Poll sync-duration cho đến khi VdoCipher encode xong
+                  let attempts = 0;
+                  const pollDuration = async () => {
+                    attempts++;
+                    try {
+                      const syncRes = await fetch(
+                        `http://localhost:5149/api/tutor/lessons/${lessonId}/sync-duration`,
+                        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+                      );
+                      if (syncRes.ok) {
+                        const syncData = await syncRes.json();
+                        if (syncData.synced) {
+                          setUploadProgress(p => ({ ...p, [lessonId]: `✅ Done! ${Math.floor(syncData.durationSeconds / 60)}m` }));
+                          if (selectedCourseId) fetchCourseChapters(selectedCourseId);
+                          return;
+                        }
+                      }
+                    } catch {}
+                    if (attempts < 10) setTimeout(pollDuration, 30000);
+                    else {
+                      setUploadProgress(p => ({ ...p, [lessonId]: "✅ Done! (sync duration manually)" }));
+                      if (selectedCourseId) fetchCourseChapters(selectedCourseId);
+                    }
+                  };
+                  setTimeout(pollDuration, 30000);
+                }
+                setUploadPercent(p => ({ ...p, [lessonId]: 100 }));
+              } else {
+                setUploadProgress(p => ({ ...p, [lessonId]: "❌ Upload done but failed to save video ID" }));
+              }
+            } catch {
+              setUploadProgress(p => ({ ...p, [lessonId]: "❌ Upload done but failed to save video ID" }));
+            }
+          } else {
+            setUploadProgress(p => ({ ...p, [lessonId]: `❌ S3 Error ${xhr.status}: ${xhr.responseText.slice(0, 120)}` }));
+            setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
+          }
+          setUploadingLessonId(null);
+          setActiveUploadLesson(null);
+          resolve();
+        });
+
+        xhr.addEventListener("error", () => {
+          setUploadProgress(p => ({ ...p, [lessonId]: "❌ Network error — check CORS or internet" }));
+          setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
+          setUploadingLessonId(null);
+          setActiveUploadLesson(null);
+          resolve();
+        });
+
+        xhr.open("POST", creds.uploadLink);
+        xhr.send(formData);
       });
 
-      // NOTE: Here we still call the admin endpoint because VdoCipher logic is the same, 
-      // but we should technically have a tutor endpoint. We added upload-credentials 
-      // and attach-video in TutorController. Let's use the new flow or just the admin one 
-      // if it works... wait, the admin endpoint validates role="Admin". 
-      // We must call the admin endpoint? No, let's just allow Instructor to call VdoCipher direct upload? 
-      // Actually, wait... ArtLab.Backend/Controllers/AdminController has `/vdocipher/lessons/{lessonId}/upload` 
-      // which uses `[Authorize(Roles = "Admin")]`. 
-      // Let's create `/vdocipher/lessons/{lessonId}/upload` for `TutorController`! 
-      // Ah, for now, let's send to a new endpoint we'll create in TutorController: `api/tutor/lessons/${lessonId}/upload`
-      xhr.open("POST", `http://localhost:5149/api/tutor/lessons/${lessonId}/upload`);
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.send(formData);
-    });
+    } catch (err: any) {
+      console.error("[VideoUpload] Unexpected error:", err);
+      setUploadProgress(p => ({ ...p, [lessonId]: `❌ ${err?.message || "Unexpected error"}` }));
+      setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
+      setUploadingLessonId(null);
+      setActiveUploadLesson(null);
+    }
   };
+
 
   const handleVideoDelete = async (lessonId: number, lessonTitle: string) => {
     if (!confirm(`Delete video for "${lessonTitle}"? This cannot be undone.`)) return;
@@ -366,6 +621,7 @@ export default function TutorDashboard() {
                         <td>${course.price.toFixed(2)} {course.discountPct > 0 && <span style={{ color: '#ef4444', fontSize: '11px', marginLeft: '4px' }}>-{course.discountPct}%</span>}</td>
                         <td><span style={{ color: '#10b981', fontWeight: 'bold' }}>Published</span></td>
                         <td style={{ display: 'flex', gap: '8px' }}>
+                          <button className={styles.actionBtn} onClick={() => openEditModal(course)}>Edit</button>
                           <button className={styles.actionBtn} onClick={() => {
                             setSelectedCourseId(course.id);
                             fetchCourseChapters(course.id);
@@ -389,17 +645,16 @@ export default function TutorDashboard() {
           {activeTab === 'curriculum' && selectedCourseId && (
             <div className={styles.coursesSection}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', gap: '12px' }}>
-                <button onClick={() => { setActiveTab('courses'); setSelectedCourseId(null); setChapters([]); }} style={{ background: 'transparent', border: '1px solid #3f3f46', color: '#fff', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
+                <button onClick={() => { setActiveTab('courses'); setSelectedCourseId(null); setChapters([]); }} style={{ background: 'white', border: '1px solid #cbd5e1', color: '#374151', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}>
                   &larr; Back to Courses
                 </button>
-                <h3 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>Course Curriculum & Uploads</h3>
+                <h3 style={{ margin: 0, fontSize: '18px', color: '#111827', fontWeight: 700 }}>Course Curriculum & Uploads</h3>
               </div>
               
               <div style={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '12px', padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: 0 }}>Curriculum structure</h3>
-                  {/* Future: Add Chapter button here */}
-                  <button style={{ background: '#3f3f46', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>+ Add Chapter</button>
+                  <button onClick={() => setShowAddChapterModal(true)} style={{ background: '#6366f1', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', fontWeight: 500 }}>+ Add Chapter</button>
                 </div>
                 
                 {chapters.length === 0 ? (
@@ -407,9 +662,74 @@ export default function TutorDashboard() {
                 ) : (
                   chapters.map(chapter => (
                     <div key={chapter.id} style={{ marginBottom: '24px' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid #27272a', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>{chapter.title}</span>
-                        <button style={{ background: 'transparent', color: '#60a5fa', border: 'none', fontSize: '12px', cursor: 'pointer' }}>+ Add Lesson</button>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px', paddingBottom: '8px', borderBottom: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {editingChapterTitle?.id === chapter.id ? (
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <input 
+                                autoFocus
+                                type="text"
+                                value={editingChapterTitle.title}
+                                onChange={e => setEditingChapterTitle({...editingChapterTitle, title: e.target.value})}
+                                style={{ padding: '2px 6px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
+                              />
+                              <button onClick={() => handleUpdateChapterTitle(chapter.id, editingChapterTitle.title)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                              <button onClick={() => setEditingChapterTitle(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ marginRight: '8px' }}>{chapter.title}</span>
+                              <button 
+                                onClick={() => setEditingChapterTitle({ id: chapter.id, title: chapter.title })} 
+                                style={{ background: '#1e293b', color: '#cbd5e1', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
+                                onMouseOver={e => e.currentTarget.style.background = '#334155'}
+                                onMouseOut={e => e.currentTarget.style.background = '#1e293b'}
+                              >
+                                <Pencil size={12} /> Rename
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteChapter(chapter.id)} 
+                                style={{ background: '#450a0a', color: '#fca5a5', border: '1px solid #7f1d1d', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
+                                onMouseOver={e => e.currentTarget.style.background = '#7f1d1d'}
+                                onMouseOut={e => e.currentTarget.style.background = '#450a0a'}
+                              >
+                                <Trash2 size={12} /> Delete
+                              </button>
+                            </div>
+                          )}
+
+                          {courses.find(c => c.id === selectedCourseId)?.isClasscutEnabled && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {editingChapterPrice?.id === chapter.id ? (
+                                <>
+                                  <input 
+                                    type="number" 
+                                    step="0.01"
+                                    min="0"
+                                    value={editingChapterPrice.price} 
+                                    onChange={e => setEditingChapterPrice({...editingChapterPrice, price: parseFloat(e.target.value) || 0})}
+                                    style={{ width: '60px', padding: '2px 4px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
+                                  />
+                                  <button onClick={() => handleUpdateChapterPrice(chapter.id, editingChapterPrice.price)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                                  <button onClick={() => setEditingChapterPrice(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
+                                </>
+                              ) : (
+                                <>
+                                  <span style={{ color: '#fbbf24', textTransform: 'none', background: '#451a03', padding: '3px 8px', borderRadius: '4px', border: '1px solid #78350f' }}>${chapter.price.toFixed(2)}</span>
+                                  <button 
+                                    onClick={() => setEditingChapterPrice({ id: chapter.id, price: chapter.price })} 
+                                    style={{ background: '#1e293b', color: '#cbd5e1', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, textTransform: 'none', transition: 'all 0.2s' }}
+                                    onMouseOver={e => e.currentTarget.style.background = '#334155'}
+                                    onMouseOut={e => e.currentTarget.style.background = '#1e293b'}
+                                  >
+                                    <Pencil size={12} /> Edit Price
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={() => { setAddingLessonChapterId(chapter.id); setNewLessonTitle(""); }} style={{ background: 'transparent', color: '#60a5fa', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', padding: '3px 10px' }}>+ Add Lesson</button>
                       </div>
                       {chapter.lessons.map((lesson: any) => {
                         const status = uploadProgress[lesson.id];
@@ -426,12 +746,48 @@ export default function TutorDashboard() {
                               transition: 'all 0.2s'
                             }}>
                               {/* Lesson info */}
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>{lesson.title}</div>
-                                <div style={{ fontSize: '12px', color: '#71717a', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                  <span>{lesson.durationMinutes}m</span>
-                                  {lesson.isFreePreview && <span style={{ color: '#4ade80', background: '#14532d', padding: '1px 6px', borderRadius: '4px' }}>FREE</span>}
-                                </div>
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {editingLesson?.id === lesson.id ? (
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <input 
+                                      autoFocus
+                                      type="text"
+                                      value={editingLesson.title}
+                                      onChange={e => setEditingLesson({...editingLesson, title: e.target.value})}
+                                      style={{ padding: '2px 6px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
+                                    />
+                                    <button onClick={() => handleUpdateLessonTitle(lesson, editingLesson.title)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                                    <button onClick={() => setEditingLesson(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div>
+                                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>{lesson.title}</div>
+                                      <div style={{ fontSize: '12px', color: '#71717a', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <span>{lesson.durationSeconds ? `${Math.floor(lesson.durationSeconds / 60)}:${(lesson.durationSeconds % 60).toString().padStart(2, '0')}` : '0m'}</span>
+                                        {lesson.isFreePreview && <span style={{ color: '#4ade80', background: '#14532d', padding: '1px 6px', borderRadius: '4px' }}>FREE</span>}
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '6px', marginLeft: '12px' }}>
+                                      <button 
+                                        onClick={() => setEditingLesson({ id: lesson.id, title: lesson.title })} 
+                                        style={{ background: '#1e293b', color: '#cbd5e1', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
+                                        onMouseOver={e => e.currentTarget.style.background = '#334155'}
+                                        onMouseOut={e => e.currentTarget.style.background = '#1e293b'}
+                                      >
+                                        <Pencil size={12} /> Edit
+                                      </button>
+                                      <button 
+                                        onClick={() => handleDeleteLesson(lesson.id)} 
+                                        style={{ background: '#450a0a', color: '#fca5a5', border: '1px solid #7f1d1d', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
+                                        onMouseOver={e => e.currentTarget.style.background = '#7f1d1d'}
+                                        onMouseOut={e => e.currentTarget.style.background = '#450a0a'}
+                                      >
+                                        <Trash2 size={12} /> Delete
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
                               </div>
 
                               {/* Status */}
@@ -535,6 +891,22 @@ export default function TutorDashboard() {
                           </div>
                         );
                       })}
+                      {/* Inline Add Lesson form */}
+                      {addingLessonChapterId === chapter.id && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '10px', background: '#0f172a', borderRadius: '8px', border: '1px solid #1d4ed8' }}>
+                          <input
+                            autoFocus
+                            type="text"
+                            placeholder="Lesson title..."
+                            value={newLessonTitle}
+                            onChange={e => setNewLessonTitle(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleAddLesson(chapter.id); if (e.key === 'Escape') setAddingLessonChapterId(null); }}
+                            style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', outline: 'none' }}
+                          />
+                          <button onClick={() => handleAddLesson(chapter.id)} style={{ background: '#4f46e5', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>Add</button>
+                          <button onClick={() => setAddingLessonChapterId(null)} style={{ background: '#27272a', color: '#a1a1aa', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -542,72 +914,199 @@ export default function TutorDashboard() {
             </div>
           )}
 
-          {activeTab === 'profile' && (
-            <div className={styles.coursesSection}>
-              <div style={{ padding: '24px', background: '#18181b', border: '1px solid #27272a', borderRadius: '16px' }}>
-                <h3 style={{ marginBottom: '24px', fontSize: '18px', color: '#fff' }}>Edit Instructor Profile</h3>
-                <form onSubmit={handleSaveProfile} className={styles.form}>
-                  <div className={styles.formGroup}>
-                    <label>Professional Headline</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g., Lead Illustrator / Concept Artist" 
-                      value={profile.headline} 
-                      onChange={e => setProfile({...profile, headline: e.target.value})} 
-                      style={{ width: '100%', padding: '10px 14px', background: '#111113', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
+          {activeTab === 'profile' && (() => {
+            let portfolioImages: string[] = [];
+            try { portfolioImages = JSON.parse(profile.portfolioImagesJson || '[]'); } catch {}
+            const addPortfolioImage = (url: string) => {
+              const trimmed = url.trim();
+              if (!trimmed || portfolioImages.includes(trimmed)) return;
+              const next = [...portfolioImages, trimmed];
+              setProfile({ ...profile, portfolioImagesJson: JSON.stringify(next) });
+            };
+            const removePortfolioImage = (idx: number) => {
+              const next = portfolioImages.filter((_, i) => i !== idx);
+              setProfile({ ...profile, portfolioImagesJson: JSON.stringify(next) });
+            };
+            const handleDrop = (e: React.DragEvent) => {
+              e.preventDefault();
+              setIsDraggingOver(false);
+              const text = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('text/uri-list');
+              if (text) { text.split('\n').forEach(u => addPortfolioImage(u)); return; }
+              Array.from(e.dataTransfer.files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = ev => { if (ev.target?.result) addPortfolioImage(ev.target.result as string); };
+                reader.readAsDataURL(file);
+              });
+            };
+            return (
+              <div className={styles.coursesSection}>
+                <div style={{ padding: '28px', background: '#18181b', border: '1px solid #27272a', borderRadius: '16px' }}>
+                  {/* Header with avatar + current info */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px', paddingBottom: '20px', borderBottom: '1px solid #27272a' }}>
+                    <img
+                      src={session?.user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(session?.user?.name || 'I')}&background=6366f1&color=fff&size=80`}
+                      alt="avatar"
+                      style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid #6366f1', objectFit: 'cover', flexShrink: 0 }}
                     />
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '18px', color: '#fff' }}>{session?.user?.name}</div>
+                      <div style={{ fontSize: '13px', color: '#71717a', marginTop: '2px' }}>{session?.user?.email}</div>
+                      {profile.headline
+                        ? <div style={{ fontSize: '13px', color: '#a78bfa', marginTop: '6px', fontStyle: 'italic' }}>"{profile.headline}"</div>
+                        : <div style={{ fontSize: '12px', color: '#52525b', marginTop: '6px' }}>No headline set yet</div>
+                      }
+                    </div>
                   </div>
-                  <div className={styles.formGroup} style={{ marginTop: '16px' }}>
-                    <label>Instructor Bio</label>
-                    <textarea 
-                      placeholder="Tell students about your experience, past projects, and what you will teach..." 
-                      rows={6}
-                      value={profile.bio} 
-                      onChange={e => setProfile({...profile, bio: e.target.value})} 
-                      style={{ width: '100%', padding: '10px 14px', background: '#111113', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
-                    />
-                  </div>
-                  <div className={styles.formGroup} style={{ marginTop: '16px' }}>
-                    <label>YouTube URL</label>
-                    <input 
-                      type="url" 
-                      placeholder="https://youtube.com/..." 
-                      value={profile.youtubeUrl} 
-                      onChange={e => setProfile({...profile, youtubeUrl: e.target.value})} 
-                      style={{ width: '100%', padding: '10px 14px', background: '#111113', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
-                    />
-                  </div>
-                  <div className={styles.formGroup} style={{ marginTop: '16px' }}>
-                    <label>Twitter/X URL</label>
-                    <input 
-                      type="url" 
-                      placeholder="https://twitter.com/..." 
-                      value={profile.twitterUrl} 
-                      onChange={e => setProfile({...profile, twitterUrl: e.target.value})} 
-                      style={{ width: '100%', padding: '10px 14px', background: '#111113', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
-                    />
-                  </div>
-                  <div className={styles.formGroup} style={{ marginTop: '16px' }}>
-                    <label>Portfolio Images (JSON Array)</label>
-                    <textarea 
-                      placeholder='["https://image1.jpg", "https://image2.jpg"]' 
-                      rows={3}
-                      value={profile.portfolioImagesJson} 
-                      onChange={e => setProfile({...profile, portfolioImagesJson: e.target.value})} 
-                      style={{ width: '100%', padding: '10px 14px', background: '#111113', border: '1px solid #27272a', borderRadius: '8px', color: '#fff', fontFamily: 'monospace' }}
-                    />
-                  </div>
-                  <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button type="submit" disabled={isSavingProfile} className={styles.submitBtn} style={{ background: '#f59e0b', color: '#000', opacity: isSavingProfile ? 0.7 : 1 }}>
-                      {isSavingProfile ? "Saving..." : "Save Profile"}
-                    </button>
-                  </div>
-                </form>
+
+                  <form onSubmit={handleSaveProfile}>
+                    <div style={{ display: 'grid', gap: '20px' }}>
+
+                      {/* Headline */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Professional Headline
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Lead Illustrator / Concept Artist"
+                          value={profile.headline}
+                          onChange={e => setProfile({ ...profile, headline: e.target.value })}
+                          style={{ width: '100%', padding: '11px 14px', background: '#111113', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                        />
+                      </div>
+
+                      {/* Bio */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Instructor Bio
+                        </label>
+                        <textarea
+                          placeholder="Tell students about your experience, past projects, and what you will teach..."
+                          rows={5}
+                          value={profile.bio}
+                          onChange={e => setProfile({ ...profile, bio: e.target.value })}
+                          style={{ width: '100%', padding: '11px 14px', background: '#111113', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.6 }}
+                        />
+                        {profile.bio && <div style={{ fontSize: '11px', color: '#52525b', marginTop: '4px', textAlign: 'right' }}>{profile.bio.length} ký tự</div>}
+                      </div>
+
+                      {/* Social */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🎬 YouTube URL</label>
+                          <input
+                            type="url"
+                            placeholder="https://youtube.com/@channel"
+                            value={profile.youtubeUrl}
+                            onChange={e => setProfile({ ...profile, youtubeUrl: e.target.value })}
+                            style={{ width: '100%', padding: '11px 14px', background: '#111113', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                          />
+                          {profile.youtubeUrl && <a href={profile.youtubeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#60a5fa', marginTop: '4px', display: 'inline-block' }}>↗ View channel</a>}
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🐦 Twitter / X URL</label>
+                          <input
+                            type="url"
+                            placeholder="https://x.com/username"
+                            value={profile.twitterUrl}
+                            onChange={e => setProfile({ ...profile, twitterUrl: e.target.value })}
+                            style={{ width: '100%', padding: '11px 14px', background: '#111113', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                          />
+                          {profile.twitterUrl && <a href={profile.twitterUrl} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#60a5fa', marginTop: '4px', display: 'inline-block' }}>↗ View profile</a>}
+                        </div>
+                      </div>
+
+                      {/* Portfolio Images */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          🖼️ Portfolio Images
+                          <span style={{ color: '#52525b', fontWeight: 400, textTransform: 'none', marginLeft: '8px' }}>
+                            {portfolioImages.length > 0 ? `${portfolioImages.length} ảnh hiện tại` : 'Chưa có ảnh nào'}
+                          </span>
+                        </label>
+
+                        {/* Image previews */}
+                        {portfolioImages.length > 0 && (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+                            {portfolioImages.map((url, idx) => (
+                              <div key={idx} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '1/1', background: '#111113', border: '1px solid #3f3f46' }}>
+                                <img
+                                  src={url}
+                                  alt={`Portfolio ${idx + 1}`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removePortfolioImage(idx)}
+                                  style={{ position: 'absolute', top: '5px', right: '5px', background: 'rgba(15,15,15,0.85)', color: '#f87171', border: '1px solid #3f3f46', borderRadius: '50%', width: '24px', height: '24px', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, lineHeight: 1 }}
+                                >×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Drop zone */}
+                        <div
+                          onDragOver={e => { e.preventDefault(); setIsDraggingOver(true); }}
+                          onDragLeave={() => setIsDraggingOver(false)}
+                          onDrop={handleDrop}
+                          style={{
+                            border: `2px dashed ${isDraggingOver ? '#6366f1' : '#3f3f46'}`,
+                            borderRadius: '10px',
+                            padding: '28px 20px',
+                            textAlign: 'center',
+                            background: isDraggingOver ? 'rgba(99,102,241,0.07)' : '#111113',
+                            transition: 'all 0.2s ease',
+                            cursor: 'default',
+                            marginBottom: '10px'
+                          }}
+                        >
+                          <div style={{ fontSize: '32px', marginBottom: '8px' }}>{isDraggingOver ? '📥' : '🖼️'}</div>
+                          <div style={{ fontSize: '14px', color: isDraggingOver ? '#a78bfa' : '#71717a', fontWeight: 600, marginBottom: '4px' }}>
+                            {isDraggingOver ? 'Thả ảnh vào đây' : 'Kéo & thả file ảnh hoặc URL vào đây'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#52525b' }}>Hỗ trợ: JPG, PNG, WebP, GIF</div>
+                        </div>
+
+                        {/* URL paste input */}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="url"
+                            placeholder="Hoặc dán URL ảnh rồi nhấn Enter..."
+                            value={portfolioUrlInput}
+                            onChange={e => setPortfolioUrlInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPortfolioImage(portfolioUrlInput); setPortfolioUrlInput(''); } }}
+                            style={{ flex: 1, padding: '9px 14px', background: '#111113', border: '1px solid #3f3f46', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { addPortfolioImage(portfolioUrlInput); setPortfolioUrlInput(''); }}
+                            style={{ background: '#27272a', color: '#d4d4d8', border: '1px solid #3f3f46', padding: '9px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}
+                          >+ Add URL</button>
+                        </div>
+                      </div>
+
+                      {/* Save button */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid #27272a' }}>
+                        <button
+                          type="submit"
+                          disabled={isSavingProfile}
+                          style={{ background: isSavingProfile ? '#52525b' : '#f59e0b', color: '#000', border: 'none', padding: '11px 28px', borderRadius: '8px', fontWeight: 700, fontSize: '14px', cursor: isSavingProfile ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}
+                        >
+                          {isSavingProfile ? '⏳ Đang lưu...' : '💾 Save Profile'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </main>
+
 
       {/* MODAL FOR NEW COURSE */}
       {showAddModal && (
@@ -680,6 +1179,178 @@ export default function TutorDashboard() {
               <div className={styles.modalFooter}>
                 <button type="button" onClick={() => setShowAddModal(false)} className={styles.cancelBtn}>Cancel</button>
                 <button type="submit" className={styles.submitBtn} style={{ background: '#f59e0b', color: '#000' }}>Publish Course</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD CHAPTER MODAL */}
+      {showAddChapterModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal} style={{ maxWidth: '420px' }}>
+            <div className={styles.modalHeader}>
+              <h3>Add New Chapter</h3>
+              <button onClick={() => setShowAddChapterModal(false)} className={styles.closeBtn}>&times;</button>
+            </div>
+            <form onSubmit={handleAddChapter} className={styles.form}>
+              <div className={styles.formGroup}>
+                <label>Chapter Title</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g., Introduction to Digital Painting"
+                  value={newChapterTitle}
+                  onChange={e => setNewChapterTitle(e.target.value)}
+                />
+              </div>
+              <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setShowAddChapterModal(false)} className={styles.cancelBtn}>Cancel</button>
+                <button type="submit" className={styles.submitBtn} style={{ background: '#6366f1' }}>Add Chapter</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* EDIT COURSE MODAL */}
+      {editingCourse && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal} style={{ maxWidth: '520px' }}>
+            <div className={styles.modalHeader}>
+              <h3>Edit Course #{editingCourse.id}</h3>
+              <button onClick={() => setEditingCourse(null)} className={styles.closeBtn}>&times;</button>
+            </div>
+            <form onSubmit={handleEditCourse} className={styles.form}>
+              <div className={styles.formGroup}>
+                <label>Course Title</label>
+                <input type="text" required value={editForm.title}
+                  onChange={e => setEditForm({...editForm, title: e.target.value})} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Category</label>
+                <select value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})}>
+                  {['Illustration','Concept Art','3D Art','Animation','Character Design','Environment Art','UI/UX','Photography'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Selling Price ($)</label>
+                  <input type="number" step="0.01" min="0" required value={editForm.price}
+                    onChange={e => setEditForm({...editForm, price: e.target.value})} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Original Price ($) <span style={{ color: '#71717a', fontWeight: 400 }}>(optional)</span></label>
+                  <input type="number" step="0.01" min="0" placeholder={editForm.price}
+                    value={editForm.originalPrice}
+                    onChange={e => setEditForm({...editForm, originalPrice: e.target.value})} />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Thumbnail</label>
+                {/* Drop zone */}
+                <div
+                  onDragOver={e => { e.preventDefault(); setIsDraggingThumb(true); }}
+                  onDragLeave={() => setIsDraggingThumb(false)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setIsDraggingThumb(false);
+                    // Try dragged URL first
+                    const url = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('text/uri-list');
+                    if (url && url.startsWith('http')) { setEditForm(f => ({...f, thumbnailUrl: url.split('\n')[0].trim()})); return; }
+                    // Try dragged file
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                      const reader = new FileReader();
+                      reader.onload = ev => { if (ev.target?.result) setEditForm(f => ({...f, thumbnailUrl: ev.target!.result as string})); };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  style={{
+                    border: `2px dashed ${isDraggingThumb ? '#6366f1' : '#3f3f46'}`,
+                    borderRadius: '10px',
+                    background: isDraggingThumb ? 'rgba(99,102,241,0.08)' : '#111113',
+                    transition: 'all 0.2s',
+                    overflow: 'hidden',
+                    minHeight: editForm.thumbnailUrl ? 'auto' : '120px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', position: 'relative',
+                  }}
+                  onClick={() => document.getElementById('thumbFileInput')?.click()}
+                >
+                  {editForm.thumbnailUrl ? (
+                    <>
+                      <img
+                        src={editForm.thumbnailUrl}
+                        alt="preview"
+                        style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', display: 'block', borderRadius: '8px' }}
+                        onError={e => (e.currentTarget.style.display = 'none')}
+                      />
+                      <div style={{
+                        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        opacity: 0, transition: 'opacity 0.2s', borderRadius: '8px',
+                      }}
+                        className="thumbOverlay"
+                        onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                        onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+                      >
+                        <span style={{ fontSize: '28px' }}>🖼️</span>
+                        <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600, marginTop: '4px' }}>Click or drag to replace</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', pointerEvents: 'none', padding: '16px' }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>🖼️</div>
+                      <div style={{ color: '#71717a', fontSize: '13px', fontWeight: 500 }}>
+                        {isDraggingThumb ? 'Drop image here!' : 'Drag & drop an image, or click to browse'}
+                      </div>
+                      <div style={{ color: '#52525b', fontSize: '11px', marginTop: '4px' }}>PNG, JPG, WebP — or drag any image URL from browser</div>
+                    </div>
+                  )}
+                  <input
+                    id="thumbFileInput"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = ev => { if (ev.target?.result) setEditForm(f => ({...f, thumbnailUrl: ev.target!.result as string})); };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </div>
+                {/* URL input fallback */}
+                <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                  <input
+                    type="url"
+                    value={editForm.thumbnailUrl.startsWith('data:') ? '' : editForm.thumbnailUrl}
+                    onChange={e => setEditForm({...editForm, thumbnailUrl: e.target.value})}
+                    placeholder="Or paste image URL here..."
+                    style={{ flex: 1, padding: '8px 12px', background: '#111113', border: '1px solid #3f3f46', borderRadius: '6px', color: '#fff', fontSize: '13px', outline: 'none' }}
+                  />
+                  {editForm.thumbnailUrl && (
+                    <button type="button" onClick={() => setEditForm(f => ({...f, thumbnailUrl: ''}))}
+                      style={{ padding: '8px 12px', background: '#27272a', border: 'none', borderRadius: '6px', color: '#a1a1aa', cursor: 'pointer', fontSize: '13px' }}>
+                      ✕ Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className={styles.formGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" id="editClasscut" checked={editForm.isClasscutEnabled}
+                  onChange={e => setEditForm({...editForm, isClasscutEnabled: e.target.checked})} style={{ width: 'auto' }} />
+                <label htmlFor="editClasscut" style={{ marginBottom: 0, cursor: 'pointer' }}>Enable Classcut</label>
+              </div>
+              <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setEditingCourse(null)} className={styles.cancelBtn}>Cancel</button>
+                <button type="submit" className={styles.submitBtn}>Save Changes</button>
               </div>
             </form>
           </div>

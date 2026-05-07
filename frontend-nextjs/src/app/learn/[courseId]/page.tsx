@@ -9,7 +9,7 @@ import styles from "./page.module.css";
 type Lesson = {
   id: number;
   title: string;
-  durationMinutes: number;
+  durationSeconds: number;
   isFreePreview: boolean;
   videoUrl: string;
   orderIndex: number;
@@ -76,6 +76,13 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
     }
   };
 
+  const fmtDuration = (seconds: number | null | undefined) => {
+    const s = Math.max(0, Math.floor(seconds ?? 0));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${r.toString().padStart(2, "0")}`;
+  };
+
   if (status === "loading" || loading) {
     return <div className={styles.loadingScreen}>Loading player...</div>;
   }
@@ -113,7 +120,7 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
                   >
                     <PlayCircle size={16} className={styles.playIcon} />
                     <span className={styles.lessonTitleText}>{lesson.title}</span>
-                    <span className={styles.durationText}>{lesson.durationMinutes}m</span>
+                    <span className={styles.durationText}>{fmtDuration(lesson.durationSeconds)}</span>
                   </button>
                 ))}
               </div>

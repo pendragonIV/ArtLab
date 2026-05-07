@@ -17,7 +17,7 @@ namespace ArtLab.Backend.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -190,7 +190,7 @@ namespace ArtLab.Backend.Migrations
                     b.Property<int>("ChapterId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DurationMinutes")
+                    b.Property<int>("DurationSeconds")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsFreePreview")
