@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArtLab.Backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7a75a00e2e6a989c9b55b7daf5529806e35bae57")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+70516ca8b59c1cd61707ea453cb233afbdbf4688")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArtLab.Backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArtLab.Backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
