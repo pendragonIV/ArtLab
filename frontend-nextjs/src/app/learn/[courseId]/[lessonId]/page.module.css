@@ -374,7 +374,7 @@
 
 /* ---- SIDEBAR ---- */
 .sidebar {
-  width: 360px;
+  width: 380px;
   flex-shrink: 0;
   background: #18181b;
   border-left: 1px solid #27272a;
@@ -382,6 +382,45 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+/* ---- TAB BAR ---- */
+.tabBar {
+  display: flex;
+  border-bottom: 1px solid #27272a;
+  flex-shrink: 0;
+  background: #111113;
+}
+
+.tabBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #71717a;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 11px 8px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tabBtn:hover { color: #a1a1aa; }
+.tabActive {
+  color: #818cf8;
+  border-bottom-color: #6366f1;
+}
+
+/* ---- CHAT CONTAINER ---- */
+.chatContainer {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 
 .sidebarHeader {
   padding: 18px 20px;
@@ -506,4 +545,26 @@
   border-radius: 4px;
   font-size: 10px;
   font-weight: 600;
+}
+
+.playerLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  border-top-color: #6366f1;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

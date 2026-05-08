@@ -18,6 +18,28 @@ namespace ArtLab.Backend.Controllers
             _context = context;
         }
 
+        // GET: api/profile/{userId}  — public, hiển thị thông tin cơ bản (không trả email)
+        [HttpGet("{userId:int}")]
+        public async Task<IActionResult> GetPublicProfile(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            var enrolledCount = await _context.Enrollments.CountAsync(e => e.UserId == userId);
+
+            return Ok(new
+            {
+                user.Id,
+                user.Username,
+                user.AvatarUrl,
+                user.Role,
+                user.Headline,
+                user.Bio,
+                user.CreatedAt,
+                TotalCourses = enrolledCount
+            });
+        }
+
         // GET: api/profile/me  — requires auth
         [HttpGet("me")]
         [Authorize]

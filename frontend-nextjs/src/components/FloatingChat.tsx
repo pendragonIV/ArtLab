@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import styles from './FloatingChat.module.css';
 import { MessageCircle, X, Megaphone, User, CreditCard, RefreshCcw, PlayCircle, BookOpen } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -8,8 +9,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const { lang } = useLanguage();
+  const pathname = usePathname();
+
+  const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([]);
 
   const toggleChat = () => setIsOpen(!isOpen);
+
+  // Ẩn FAB trên trang learn (đã có LessonChat sidebar riêng)
+  if (pathname?.startsWith('/learn')) return null;
 
   // Translations for chat UI
   const translations = {
@@ -38,8 +45,6 @@ export default function FloatingChat() {
   };
 
   const t = translations[lang as keyof typeof translations] || translations.en;
-
-  const [messages, setMessages] = useState<{sender: 'user'|'bot', text: string}[]>([]);
 
   const handleQuickAction = (actionText: string) => {
     // Add user message
