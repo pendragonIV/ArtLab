@@ -676,11 +676,11 @@ export default function TutorDashboard() {
                               <input 
                                 autoFocus
                                 type="text"
-                                value={editingChapterTitle.title}
-                                onChange={e => setEditingChapterTitle({...editingChapterTitle, title: e.target.value})}
+                                value={editingChapterTitle?.title || ''}
+                                onChange={e => setEditingChapterTitle({...editingChapterTitle!, title: e.target.value})}
                                 style={{ padding: '2px 6px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
                               />
-                              <button onClick={() => handleUpdateChapterTitle(chapter.id, editingChapterTitle.title)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                              <button onClick={() => handleUpdateChapterTitle(chapter.id, editingChapterTitle?.title || '')} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
                               <button onClick={() => setEditingChapterTitle(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
                             </div>
                           ) : (
@@ -713,11 +713,11 @@ export default function TutorDashboard() {
                                     type="number" 
                                     step="0.01"
                                     min="0"
-                                    value={editingChapterPrice.price} 
-                                    onChange={e => setEditingChapterPrice({...editingChapterPrice, price: parseFloat(e.target.value) || 0})}
+                                    value={editingChapterPrice?.price || 0} 
+                                    onChange={e => setEditingChapterPrice({...editingChapterPrice!, price: parseFloat(e.target.value) || 0})}
                                     style={{ width: '60px', padding: '2px 4px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
                                   />
-                                  <button onClick={() => handleUpdateChapterPrice(chapter.id, editingChapterPrice.price)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                                  <button onClick={() => handleUpdateChapterPrice(chapter.id, editingChapterPrice?.price || 0)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
                                   <button onClick={() => setEditingChapterPrice(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
                                 </>
                               ) : (
@@ -759,11 +759,11 @@ export default function TutorDashboard() {
                                     <input 
                                       autoFocus
                                       type="text"
-                                      value={editingLesson.title}
-                                      onChange={e => setEditingLesson({...editingLesson, title: e.target.value})}
+                                      value={editingLesson?.title || ''}
+                                      onChange={e => setEditingLesson({...editingLesson!, title: e.target.value})}
                                       style={{ padding: '2px 6px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
                                     />
-                                    <button onClick={() => handleUpdateLessonTitle(lesson, editingLesson.title)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                                    <button onClick={() => handleUpdateLessonTitle(lesson, editingLesson?.title || '')} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
                                     <button onClick={() => setEditingLesson(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
                                   </div>
                                 ) : (
