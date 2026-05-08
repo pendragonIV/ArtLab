@@ -136,7 +136,7 @@ export default function Header() {
     // @ts-ignore
     const token = session?.backendToken;
     if (!token) return;
-    fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart`, {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -147,7 +147,7 @@ export default function Header() {
   const performSearch = async (query: string) => {
     setIsSearching(true);
     try {
-      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/search?q=${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data);

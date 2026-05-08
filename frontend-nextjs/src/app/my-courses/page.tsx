@@ -36,7 +36,7 @@ export default function MyCoursesPage() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/mycourses`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/mycourses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

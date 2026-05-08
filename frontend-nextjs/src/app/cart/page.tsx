@@ -48,7 +48,7 @@ export default function CartPage() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -66,7 +66,7 @@ export default function CartPage() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart/${cartItemId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart/${cartItemId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -88,7 +88,7 @@ export default function CartPage() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/checkout`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/checkout`, {
         method: "POST",
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -126,7 +126,7 @@ export default function CartPage() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/coupons/apply`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/coupons/apply`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -27,7 +27,7 @@ type InstructorProfile = {
 export default async function InstructorPage({ params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
 
-  const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/instructors/${name}`, { cache: "no-store" });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/instructors/${name}`, { cache: "no-store" });
   if (!res.ok) return notFound();
 
   const instructor: InstructorProfile = await res.json();

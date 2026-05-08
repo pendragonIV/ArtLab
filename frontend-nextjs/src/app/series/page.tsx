@@ -31,7 +31,7 @@ export default function SeriesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/series`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/series`)
       .then((r) => r.json())
       .then((data) => { setSeriesList(data); setLoading(false); })
       .catch(() => setLoading(false));

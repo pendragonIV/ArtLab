@@ -29,7 +29,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   let courses: Course[] = [];
   try {
     // Fetch courses filtered by category from our ASP.NET Core backend
-    const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses?category=${slug}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses?category=${slug}`, {
       // In development, Next.js caches aggressively. We use revalidate 0 for live updates.
       next: { revalidate: 0 }
     });

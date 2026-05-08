@@ -89,7 +89,7 @@ export default function LessonChat({ lessonId, currentVideoTime, seekTo }: Lesso
   const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/chat/lesson/${lessonId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/chat/lesson/${lessonId}`
       );
       if (!res.ok) return;
       const data: ChatMessage[] = await res.json();
@@ -150,7 +150,7 @@ export default function LessonChat({ lessonId, currentVideoTime, seekTo }: Lesso
     const ts = Math.floor(currentVideoTime);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/chat/lesson/${lessonId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/chat/lesson/${lessonId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

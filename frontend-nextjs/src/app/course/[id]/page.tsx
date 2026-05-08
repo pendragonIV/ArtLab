@@ -53,7 +53,7 @@ type Course = {
 
 export default async function CourseDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/${id}`, { cache: 'no-store' });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/${id}`, { cache: 'no-store' });
   if (!res.ok) notFound();
 
   const course: Course = await res.json();
@@ -69,7 +69,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
     if (session?.user?.email) {
       // Check via backend if enrolled — pass header without token (public endpoint check)
       const enrollRes = await fetch(
-        `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/${id}/is-enrolled?email=${encodeURIComponent(session.user.email)}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/${id}/is-enrolled?email=${encodeURIComponent(session.user.email)}`,
         { cache: 'no-store' }
       );
       if (enrollRes.ok) {
@@ -78,7 +78,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ id: s
       }
     }
   } catch {}
-  const recRes = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses`, { cache: 'no-store' });
+  const recRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses`, { cache: 'no-store' });
   let recommendedCourses: Course[] = [];
   if (recRes.ok) {
     const allCourses: Course[] = await recRes.json();
