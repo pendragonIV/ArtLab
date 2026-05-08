@@ -150,7 +150,6 @@ export default function LearnPage() {
   const [collapsedChapters, setCollapsedChapters] = useState<Set<number>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<SidebarTab>("curriculum");
-  const [isFocused, setIsFocused] = useState(true);
 
   // HTML5 video player state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -373,23 +372,6 @@ export default function LearnPage() {
     };
   }, []); // intentionally empty — refs always have latest values
 
-  /* ── FOCUS TRACKING (Anti Screen Record) ── */
-  useEffect(() => {
-    const focusCheck = setInterval(() => {
-      const hasFocus = document.hasFocus();
-      if (!hasFocus && isFocused) {
-        setIsFocused(false);
-        // Tạm dừng cả 2 loại video
-        try { vdoPlayerRef.current?.video?.pause(); } catch (e) {}
-        try { videoRef.current?.pause(); } catch (e) {}
-      } else if (hasFocus && !isFocused) {
-        setIsFocused(true);
-      }
-    }, 300);
-
-    return () => clearInterval(focusCheck);
-  }, [isFocused]);
-
   /* HTML5 video listeners + RESUME */
   useEffect(() => {
     const v = videoRef.current;
@@ -521,22 +503,7 @@ export default function LearnPage() {
 
       {/* BODY */}
       <div className={styles.body}>
-        <div className={styles.videoArea} style={{ position: 'relative' }}>
-          
-          {/* Blur Overlay */}
-          {!isFocused && !lesson?.isLocked && (
-            <div style={{
-              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-              backgroundColor: '#000', zIndex: 50, display: 'flex', flexDirection: 'column',
-              justifyContent: 'center', alignItems: 'center', color: '#fff',
-              textAlign: 'center', padding: '20px'
-            }}>
-              <VolumeX size={48} style={{ color: '#ef4444', marginBottom: '16px' }} />
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>Playback Paused</h2>
-              <p style={{ color: '#a1a1aa' }}>Video is paused because the window lost focus.<br/>Click here to resume learning.</p>
-            </div>
-          )}
-
+        <div className={styles.videoArea}>
           {lesson?.isLocked ? (
             /* Locked */
             <div className={styles.lockedScreen}>
