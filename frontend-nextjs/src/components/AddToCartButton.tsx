@@ -20,7 +20,7 @@ export default function AddToCartButton({ courseId, className, label }: { course
       // @ts-ignore
       const token = session.backendToken;
 
-      const res = await fetch(`http://localhost:5149/api/cart/${courseId}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart/${courseId}`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`

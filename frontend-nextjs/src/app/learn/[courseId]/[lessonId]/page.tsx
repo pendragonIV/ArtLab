@@ -171,7 +171,7 @@ export default function LearnPage() {
 
   /* Fetch curriculum */
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5149"}/api/lessons/course/${courseId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/lessons/course/${courseId}`, {
       headers: authHeaders(),
     })
       .then((r) => r.json())
@@ -189,7 +189,7 @@ export default function LearnPage() {
     lastSavedTimeRef.current = 0;
     progressRef.current = 0;
 
-    const base = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5149";
+    const base = process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`;
     const lsKey = `artlab_progress_${lessonId}`;
 
     Promise.all([
@@ -230,7 +230,7 @@ export default function LearnPage() {
     const lsKey = `artlab_progress_${lessonId}`;
     localStorage.setItem(lsKey, String(t));
     // Gửi lên server (sẽ fail silently nếu chưa login)
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5149"}/api/progress/update`, {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/progress/update`, {
       method: "POST",
       headers: { ...authHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({ lessonId, watchedSeconds: t, isCompleted })
@@ -246,7 +246,7 @@ export default function LearnPage() {
       if (prev.has(id)) return prev;
       const s = new Set(prev); s.add(id); return s;
     });
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5149"}/api/lessons/${id}/complete`, {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/lessons/${id}/complete`, {
       method: "POST", headers: authHeaders(),
     }).catch(console.error);
   }, [authHeaders]);

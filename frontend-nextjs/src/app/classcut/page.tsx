@@ -30,7 +30,7 @@ export default function ClasscutPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:5149/api/courses/classcuts')
+    fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses/classcuts`)
       .then(res => res.json())
       .then(data => { setCourses(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -67,7 +67,7 @@ export default function ClasscutPage() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch('http://localhost:5149/api/cart/chapters', {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/cart/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(ids),

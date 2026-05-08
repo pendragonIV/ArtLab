@@ -47,7 +47,7 @@ export default function ProfilePage() {
     try {
       // @ts-ignore
       const token = session!.backendToken;
-      const res = await fetch("http://localhost:5149/api/profile/me", {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/profile/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -67,7 +67,7 @@ export default function ProfilePage() {
     try {
       // @ts-ignore
       const token = session!.backendToken;
-      await fetch("http://localhost:5149/api/profile/me", {
+      await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/profile/me`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ username: editName }),

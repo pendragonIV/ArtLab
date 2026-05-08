@@ -56,7 +56,7 @@ export default function PublicProfilePage() {
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5149"}/api/profile/${userId}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`}/api/profile/${userId}`)
       .then(async (res) => {
         if (!res.ok) { setNotFound(true); return; }
         const data = await res.json();

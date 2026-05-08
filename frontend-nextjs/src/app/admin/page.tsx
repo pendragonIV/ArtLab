@@ -47,9 +47,9 @@ export default function AdminDashboard() {
 
     try {
       const [statsRes, coursesRes, usersRes] = await Promise.all([
-        fetch("http://localhost:5149/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("http://localhost:5149/api/admin/courses", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("http://localhost:5149/api/admin/users", { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/courses`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
@@ -77,13 +77,13 @@ export default function AdminDashboard() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`http://localhost:5149/api/admin/tutors/${id}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/tutors/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
       // Fallback for normal user deletion
       if (!res.ok && res.status === 404) {
-        await fetch(`http://localhost:5149/api/admin/users/${id}`, {
+        await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/users/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`http://localhost:5149/api/admin/users/${id}/ban`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/users/${id}/ban`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ isBanned: !currentBanState })
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`http://localhost:5149/api/admin/courses/${id}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/courses/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

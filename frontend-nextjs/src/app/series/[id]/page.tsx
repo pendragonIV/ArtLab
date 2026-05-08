@@ -35,7 +35,7 @@ export default async function SeriesDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const res = await fetch(`http://localhost:5149/api/series/${id}`, {
+  const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/series/${id}`, {
     cache: "no-store",
   });
   if (!res.ok) return notFound();

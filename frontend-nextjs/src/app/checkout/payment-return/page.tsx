@@ -30,7 +30,7 @@ function PaymentReturnContent() {
     }
 
     // For VNPay return
-    fetch(`http://localhost:5149/api/checkout/vnpay-return?${queryString}`)
+    fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/checkout/vnpay-return?${queryString}`)
       .then(async (res) => {
         if (res.ok) {
           setStatus("success");

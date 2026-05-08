@@ -94,17 +94,17 @@ export default function TutorDashboard() {
     try {
       const token = (session as any).backendToken;
       
-      const statsRes = await fetch("http://localhost:5149/api/tutor/stats", {
+      const statsRes = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (statsRes.ok) setStats(await statsRes.json());
 
-      const coursesRes = await fetch("http://localhost:5149/api/tutor/courses", {
+      const coursesRes = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (coursesRes.ok) setCourses(await coursesRes.json());
       
-      const profileRes = await fetch("http://localhost:5149/api/tutor/profile", {
+      const profileRes = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (profileRes.ok) {
@@ -123,7 +123,7 @@ export default function TutorDashboard() {
     e.preventDefault();
     try {
       const token = (session as any).backendToken;
-      const res = await fetch("http://localhost:5149/api/tutor/courses", {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -160,7 +160,7 @@ export default function TutorDashboard() {
     setIsSavingProfile(true);
     try {
       const token = (session as any).backendToken;
-      const res = await fetch("http://localhost:5149/api/tutor/profile", {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/profile`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
@@ -184,7 +184,7 @@ export default function TutorDashboard() {
     if (!confirm("Are you sure you want to delete this course? All data will be lost.")) return;
     try {
       const token = (session as any).backendToken;
-      const res = await fetch(`http://localhost:5149/api/tutor/courses/${id}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -214,7 +214,7 @@ export default function TutorDashboard() {
     if (!editingCourse) return;
     try {
       const token = (session as any).backendToken;
-      const res = await fetch(`http://localhost:5149/api/tutor/courses/${editingCourse.id}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses/${editingCourse.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -239,7 +239,7 @@ export default function TutorDashboard() {
 
   const fetchCourseChapters = async (courseId: number) => {
     const token = (session as any)?.backendToken;
-    const res = await fetch(`http://localhost:5149/api/tutor/courses/${courseId}/curriculum`, {
+    const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses/${courseId}/curriculum`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     if (res.ok) {
@@ -252,7 +252,7 @@ export default function TutorDashboard() {
     e.preventDefault();
     if (!selectedCourseId || !newChapterTitle.trim()) return;
     const token = (session as any)?.backendToken;
-    const res = await fetch(`http://localhost:5149/api/tutor/courses/${selectedCourseId}/chapters`, {
+    const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses/${selectedCourseId}/chapters`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title: newChapterTitle, price: 0, sortOrder: chapters.length })
@@ -269,7 +269,7 @@ export default function TutorDashboard() {
   const handleUpdateChapterPrice = async (chapterId: number, newPrice: number) => {
     const token = (session as any)?.backendToken;
     try {
-      const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}/price`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/chapters/${chapterId}/price`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ price: newPrice })
@@ -288,7 +288,7 @@ export default function TutorDashboard() {
   const handleAddLesson = async (chapterId: number) => {
     if (!newLessonTitle.trim()) return;
     const token = (session as any)?.backendToken;
-    const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}/lessons`, {
+    const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/chapters/${chapterId}/lessons`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title: newLessonTitle, isFreePreview: false, orderIndex: 0, durationSeconds: 0 })
@@ -306,7 +306,7 @@ export default function TutorDashboard() {
     if (!newTitle.trim()) return;
     const token = (session as any)?.backendToken;
     try {
-      const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/chapters/${chapterId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: newTitle, price: 0, sortOrder: 0 })
@@ -322,7 +322,7 @@ export default function TutorDashboard() {
     if (!confirm("Are you sure you want to delete this chapter and all its lessons?")) return;
     const token = (session as any)?.backendToken;
     try {
-      const res = await fetch(`http://localhost:5149/api/tutor/chapters/${chapterId}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/chapters/${chapterId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -334,7 +334,7 @@ export default function TutorDashboard() {
     if (!newTitle.trim()) return;
     const token = (session as any)?.backendToken;
     try {
-      const res = await fetch(`http://localhost:5149/api/tutor/lessons/${lesson.id}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lesson.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: newTitle, isFreePreview: lesson.isFreePreview, orderIndex: lesson.orderIndex || 0, durationSeconds: lesson.durationSeconds || 0 })
@@ -350,7 +350,7 @@ export default function TutorDashboard() {
     if (!confirm("Are you sure you want to delete this lesson?")) return;
     const token = (session as any)?.backendToken;
     try {
-      const res = await fetch(`http://localhost:5149/api/tutor/lessons/${lessonId}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -371,7 +371,7 @@ export default function TutorDashboard() {
       let credRes: Response;
       try {
         credRes = await fetch(
-          `http://localhost:5149/api/tutor/lessons/${lessonId}/upload-credentials`,
+          `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}/upload-credentials`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch {
@@ -424,7 +424,7 @@ export default function TutorDashboard() {
             // ── Bước 3: Báo backend lưu videoId vào DB ──────────────────────
             try {
               const attachRes = await fetch(
-                `http://localhost:5149/api/tutor/lessons/${lessonId}/attach-video`,
+                `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}/attach-video`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -444,7 +444,7 @@ export default function TutorDashboard() {
                     attempts++;
                     try {
                       const syncRes = await fetch(
-                        `http://localhost:5149/api/tutor/lessons/${lessonId}/sync-duration`,
+                        `\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}/sync-duration`,
                         { method: "POST", headers: { Authorization: `Bearer ${token}` } }
                       );
                       if (syncRes.ok) {
@@ -507,7 +507,7 @@ export default function TutorDashboard() {
     const token = (session as any)?.backendToken;
     if (!token) return;
     try {
-      const res = await fetch(`http://localhost:5149/api/tutor/lessons/${lessonId}/video`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}/video`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

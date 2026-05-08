@@ -52,7 +52,7 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`http://localhost:5149/api/mycourses/${courseId}`, {
+      const res = await fetch(`\${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/mycourses/${courseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
