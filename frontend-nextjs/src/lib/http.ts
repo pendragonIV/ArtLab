@@ -8,7 +8,7 @@ function log(level: LogLevel, message: string, data?: Record<string, unknown>) {
 
 function getBackendBaseUrl() {
   // Client components can only read NEXT_PUBLIC_*
-  const publicUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+  const publicUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const serverUrl = process.env.BACKEND_BASE_URL;
   return (serverUrl || publicUrl || "http://localhost:5149").replace(/\/$/, "");
 }
