@@ -4,6 +4,7 @@ import "./globals.css";
 import { NextAuthProvider } from "@/components/Providers";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import FloatingChat from "@/components/FloatingChat";
+import SecurityWrapper from "@/components/SecurityWrapper";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <NextAuthProvider>
           <LanguageProvider>
+            <SecurityWrapper />
             {children}
             <FloatingChat />
           </LanguageProvider>
