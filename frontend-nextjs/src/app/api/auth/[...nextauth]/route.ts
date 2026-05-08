@@ -74,8 +74,6 @@ const handler = NextAuth({
         console.error("Failed to decode backend token for role", e);
       }
 
-      // TEMPORARY BYPASS: Force admin role to bypass JWT cookie cache
-      (session as any).role = "Admin";
 
       return session;
     }
