@@ -87,14 +87,14 @@ function TikTokWatermark({ label }: { label: string }) {
     let x = Math.random() * 50;
     let y = Math.random() * 50;
     // Tốc độ di chuyển
-    let dx = 0.06;
-    let dy = 0.04;
+    let dx = 0.08;
+    let dy = 0.06;
     let animationFrameId: number;
 
     const move = () => {
       if (!el.parentElement) return;
-      const parentWidth = el.parentElement.clientWidth;
-      const parentHeight = el.parentElement.clientHeight;
+      const parentWidth = el.parentElement.clientWidth || window.innerWidth;
+      const parentHeight = el.parentElement.clientHeight || window.innerHeight;
       const elWidth = el.clientWidth;
       const elHeight = el.clientHeight;
 
@@ -102,12 +102,12 @@ function TikTokWatermark({ label }: { label: string }) {
       let px = (x * parentWidth) / 100;
       let py = (y * parentHeight) / 100;
 
-      // Đổi hướng nếu đụng tường
+      // Đổi hướng nếu đụng tường (và chống kẹt nếu màn hình quá nhỏ)
       if (px <= 0) { dx = Math.abs(dx); }
-      else if (px + elWidth >= parentWidth) { dx = -Math.abs(dx); }
+      else if (px + elWidth >= parentWidth && dx > 0) { dx = -Math.abs(dx); }
       
       if (py <= 0) { dy = Math.abs(dy); }
-      else if (py + elHeight >= parentHeight) { dy = -Math.abs(dy); }
+      else if (py + elHeight >= parentHeight && dy > 0) { dy = -Math.abs(dy); }
 
       x += dx;
       y += dy;
@@ -131,14 +131,16 @@ function TikTokWatermark({ label }: { label: string }) {
         position: 'absolute',
         pointerEvents: 'none',
         userSelect: 'none',
-        color: 'rgba(255,255,255,0.25)', // Mờ 25%
-        fontSize: '13px',
-        fontWeight: 600,
-        fontFamily: 'monospace',
+        color: 'rgba(255, 255, 255, 0.4)', // Mờ 40% (rõ hơn lúc nãy)
+        fontSize: '18px', // To hơn
+        fontWeight: 800,
+        fontFamily: 'sans-serif',
         whiteSpace: 'nowrap',
-        zIndex: 20,
-        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-        letterSpacing: '0.5px',
+        zIndex: 9999, // Đảm bảo luôn nằm trên cùng
+        // Tạo viền đen cực đậm xung quanh chữ để nền trắng hay nền đen đều thấy rõ
+        textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 4px 10px rgba(0,0,0,1)',
+        letterSpacing: '1px',
+        padding: '10px',
       }}
     >
       {label} • IP: {ip} • {time}
