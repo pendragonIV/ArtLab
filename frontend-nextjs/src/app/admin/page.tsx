@@ -64,9 +64,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const role = (session as any)?.role;
-    if (status === "authenticated" && role === "Admin") {
+    if (status === "authenticated" && (role === "Admin" || role === "Moderator")) {
       fetchData();
-    } else if (status === "unauthenticated" || (status === "authenticated" && role !== "Admin")) {
+    } else if (status === "unauthenticated" || (status === "authenticated" && role !== "Admin" && role !== "Moderator")) {
       window.location.href = "/";
     }
   }, [status, session]);
@@ -104,9 +104,35 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ isBanned: !currentBanState })
       });
-      if (res.ok) fetchData();
+      if (res.ok) {
+        fetchData();
+      } else {
+        const errorText = await res.text();
+        alert("Failed to ban user: " + errorText);
+      }
     } catch (err) {
       alert("Error toggling ban status");
+    }
+  };
+
+  const handleRoleChange = async (id: number, newRole: string) => {
+    try {
+      // @ts-ignore
+      const token = session.backendToken;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/users/${id}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (res.ok) {
+        alert("Role updated successfully");
+        fetchData();
+      } else {
+        const errorText = await res.text();
+        alert("Failed to update role: " + errorText);
+      }
+    } catch (err) {
+      alert("Error updating role");
     }
   };
 
@@ -264,12 +290,25 @@ export default function AdminDashboard() {
                         <td data-label="Name" style={{ fontWeight: 500 }}>{user.name}</td>
                         <td data-label="Email">{user.email}</td>
                         <td data-label="Role">
-                          <span className={styles.badge} style={{ 
-                            background: user.role === 'Admin' ? '#fef2f2' : '#e0e7ff', 
-                            color: user.role === 'Admin' ? '#ef4444' : '#4f46e5' 
-                          }}>
-                            {user.role}
-                          </span>
+                          {(session as any)?.role === 'Admin' && user.id !== (session as any)?.user?.id ? (
+                            <select 
+                              className={styles.roleSelect} 
+                              value={user.role} 
+                              onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            >
+                              <option value="Student">Student</option>
+                              <option value="Instructor">Tutor</option>
+                              <option value="Moderator">Moderator</option>
+                              <option value="Admin">Admin</option>
+                            </select>
+                          ) : (
+                            <span className={styles.badge} style={{ 
+                              background: user.role === 'Admin' ? '#fef2f2' : user.role === 'Moderator' ? '#fdf4ff' : '#e0e7ff', 
+                              color: user.role === 'Admin' ? '#ef4444' : user.role === 'Moderator' ? '#c026d3' : '#4f46e5' 
+                            }}>
+                              {user.role}
+                            </span>
+                          )}
                         </td>
                         <td data-label="Joined">{new Date(user.createdAt).toLocaleDateString()}</td>
                         <td data-label="Actions">
@@ -278,7 +317,9 @@ export default function AdminDashboard() {
                             {/* @ts-ignore */}
                             {user.isBanned ? 'Unban' : 'Ban'}
                           </button>
-                          <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteUser(user.id)}>Delete</button>
+                          {(session as any)?.role === 'Admin' && (
+                            <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteUser(user.id)}>Delete</button>
+                          )}
                         </td>
                       </tr>
                     ))}

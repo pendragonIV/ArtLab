@@ -10,7 +10,7 @@ namespace ArtLab.Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Moderator")]
     public class AdminController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -91,8 +91,13 @@ namespace ArtLab.Backend.Controllers
             if (user == null) return NotFound();
 
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
             if (currentUserId == id.ToString())
-                return BadRequest("You cannot ban your own admin account.");
+                return BadRequest("You cannot ban your own account.");
+
+            if (currentUserRole == "Moderator" && (user.Role == "Admin" || user.Role == "Moderator"))
+                return BadRequest("Moderators cannot ban Admins or other Moderators.");
 
             user.IsBanned = dto.IsBanned;
             await _context.SaveChangesAsync();
@@ -109,8 +114,13 @@ namespace ArtLab.Backend.Controllers
             if (user == null) return NotFound();
 
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
             if (currentUserId == id.ToString())
-                return BadRequest("You cannot delete your own admin account.");
+                return BadRequest("You cannot delete your own account.");
+
+            if (currentUserRole == "Moderator")
+                return BadRequest("Moderators are not allowed to delete users.");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
@@ -121,7 +131,11 @@ namespace ArtLab.Backend.Controllers
         [HttpPatch("users/{id}/role")]
         public async Task<IActionResult> SetUserRole(int id, [FromBody] SetRoleDto dto)
         {
-            var allowed = new[] { "Student", "Instructor", "Admin" };
+            var currentUserRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (currentUserRole != "Admin")
+                return BadRequest("Only Admins can change user roles.");
+
+            var allowed = new[] { "Student", "Instructor", "Moderator", "Admin" };
             if (!allowed.Contains(dto.Role))
                 return BadRequest($"Role must be one of: {string.Join(", ", allowed)}");
 

@@ -56,7 +56,7 @@ export default function TutorDashboard() {
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([]);
   const [editingChapterPrice, setEditingChapterPrice] = useState<{id: number, price: number} | null>(null);
   const [editingChapterTitle, setEditingChapterTitle] = useState<{id: number, title: string} | null>(null);
-  const [editingLesson, setEditingLesson] = useState<{id: number, title: string} | null>(null);
+  const [editingLesson, setEditingLesson] = useState<{id: number, title: string, isFreePreview: boolean, durationSeconds: number} | null>(null);
   const [uploadingLessonId, setUploadingLessonId] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Record<number, string>>({}); // lessonId -> status msg
   const [uploadPercent, setUploadPercent] = useState<Record<number, number>>({}); // lessonId -> 0-100
@@ -330,14 +330,21 @@ export default function TutorDashboard() {
     } catch {}
   };
 
-  const handleUpdateLessonTitle = async (lesson: any, newTitle: string) => {
-    if (!newTitle.trim()) return;
+  const handleUpdateLesson = async (lessonId: number) => {
+    if (!editingLesson || !editingLesson.title.trim()) return;
     const token = (session as any)?.backendToken;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lesson.id}`, {
+      const targetChapter = chapters.find(c => c.lessons.some(l => l.id === lessonId));
+      const targetLesson = targetChapter?.lessons.find((l: any) => l.id === lessonId);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: newTitle, isFreePreview: lesson.isFreePreview, orderIndex: lesson.orderIndex || 0, durationSeconds: lesson.durationSeconds || 0 })
+        body: JSON.stringify({ 
+          title: editingLesson.title, 
+          isFreePreview: editingLesson.isFreePreview, 
+          orderIndex: (targetLesson as any)?.orderIndex || 0, 
+          durationSeconds: editingLesson.durationSeconds || 0 
+        })
       });
       if (res.ok) {
         setEditingLesson(null);
@@ -755,15 +762,34 @@ export default function TutorDashboard() {
                               {/* Lesson info */}
                               <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {editingLesson?.id === lesson.id ? (
-                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                     <input 
                                       autoFocus
                                       type="text"
-                                      value={editingLesson?.title || ''}
+                                      placeholder="Lesson title"
+                                      value={editingLesson?.title || ""}
                                       onChange={e => setEditingLesson({...editingLesson!, title: e.target.value})}
-                                      style={{ padding: '2px 6px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px' }}
+                                      style={{ padding: '2px 6px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px', minWidth: '150px' }}
                                     />
-                                    <button onClick={() => handleUpdateLessonTitle(lesson, editingLesson?.title || '')} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
+                                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                      Duration (s):
+                                      <input 
+                                        type="number"
+                                        min="0"
+                                        value={editingLesson?.durationSeconds || 0}
+                                        onChange={e => setEditingLesson({...editingLesson!, durationSeconds: parseInt(e.target.value) || 0})}
+                                        style={{ padding: '2px 4px', background: '#1e293b', border: '1px solid #334155', color: '#fff', borderRadius: '4px', fontSize: '12px', width: '60px' }}
+                                      />
+                                    </label>
+                                    <label style={{ fontSize: '11px', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                                      <input 
+                                        type="checkbox"
+                                        checked={editingLesson?.isFreePreview || false}
+                                        onChange={e => setEditingLesson({...editingLesson!, isFreePreview: e.target.checked})}
+                                      />
+                                      Free Preview
+                                    </label>
+                                    <button onClick={() => handleUpdateLesson(lesson.id)} style={{ background: '#4ade80', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold' }}>Save</button>
                                     <button onClick={() => setEditingLesson(null)} style={{ background: '#3f3f46', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '2px 6px', fontSize: '11px' }}>Cancel</button>
                                   </div>
                                 ) : (
@@ -772,12 +798,12 @@ export default function TutorDashboard() {
                                       <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '2px' }}>{lesson.title}</div>
                                       <div style={{ fontSize: '12px', color: '#71717a', display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         <span>{lesson.durationSeconds ? `${Math.floor(lesson.durationSeconds / 60)}:${(lesson.durationSeconds % 60).toString().padStart(2, '0')}` : '0m'}</span>
-                                        {lesson.isFreePreview && <span style={{ color: '#4ade80', background: '#14532d', padding: '1px 6px', borderRadius: '4px' }}>FREE</span>}
+                                        {lesson.isFreePreview && <span style={{ color: '#4ade80', background: '#14532d', padding: '1px 6px', borderRadius: '4px' }}>FREE PREVIEW</span>}
                                       </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '6px', marginLeft: '12px' }}>
                                       <button 
-                                        onClick={() => setEditingLesson({ id: lesson.id, title: lesson.title })} 
+                                        onClick={() => setEditingLesson({ id: lesson.id, title: lesson.title, isFreePreview: lesson.isFreePreview || false, durationSeconds: lesson.durationSeconds || 0 })} 
                                         style={{ background: '#1e293b', color: '#cbd5e1', border: '1px solid #334155', borderRadius: '4px', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, transition: 'all 0.2s' }}
                                         onMouseOver={e => e.currentTarget.style.background = '#334155'}
                                         onMouseOut={e => e.currentTarget.style.background = '#1e293b'}
