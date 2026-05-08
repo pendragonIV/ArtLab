@@ -47,28 +47,28 @@ type LessonDetail = {
   isLocked: boolean;
 };
 
-/* ---------- Multi-Watermark component ----------
-   Hiển thị 5 watermark cùng lúc ở vị trí cố định + random offset,
-   chứa email + userId + timestamp — không thể crop hết khi edit video
+/* ---------- TikTok-style Watermark ----------
+   Hiển thị 1 watermark duy nhất di chuyển liên tục như màn hình chờ DVD,
+   chứa IP + email + timestamp
 */
-function MultiWatermark({ label }: { label: string }) {
+function TikTokWatermark({ label }: { label: string }) {
   const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState("");
-  const [offsets, setOffsets] = useState<{ x: number; y: number }[]>([]);
-
-  // Fixed zones: top-left, top-right, center, bottom-left, bottom-right
-  const zones = [
-    { baseX: 3,  baseY: 6  },
-    { baseX: 55, baseY: 8  },
-    { baseX: 25, baseY: 42 },
-    { baseX: 4,  baseY: 78 },
-    { baseX: 58, baseY: 80 },
-  ];
+  const [ip, setIp] = useState("Loading IP...");
+  const markRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
+  // Lấy IP của người dùng
   useEffect(() => {
-    // Update timestamp every second so watermark content changes
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => setIp(d.ip))
+      .catch(() => setIp("Unknown IP"));
+  }, []);
+
+  // Cập nhật đồng hồ
+  useEffect(() => {
     const tick = () => {
       const now = new Date();
       setTime(`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`);
@@ -78,48 +78,71 @@ function MultiWatermark({ label }: { label: string }) {
     return () => clearInterval(t);
   }, []);
 
+  // Hiệu ứng di chuyển liên tục (DVD Bounce)
   useEffect(() => {
-    // Slightly shift watermark positions every 8s to avoid easy masking
-    const shift = () => {
-      setOffsets(zones.map(() => ({
-        x: (Math.random() - 0.5) * 6,
-        y: (Math.random() - 0.5) * 4,
-      })));
+    const el = markRef.current;
+    if (!el) return;
+
+    // Vị trí bắt đầu ngẫu nhiên (%)
+    let x = Math.random() * 50;
+    let y = Math.random() * 50;
+    // Tốc độ di chuyển
+    let dx = 0.06;
+    let dy = 0.04;
+    let animationFrameId: number;
+
+    const move = () => {
+      if (!el.parentElement) return;
+      const parentWidth = el.parentElement.clientWidth;
+      const parentHeight = el.parentElement.clientHeight;
+      const elWidth = el.clientWidth;
+      const elHeight = el.clientHeight;
+
+      // Tính bằng Pixel để va chạm mép
+      let px = (x * parentWidth) / 100;
+      let py = (y * parentHeight) / 100;
+
+      // Đổi hướng nếu đụng tường
+      if (px <= 0) { dx = Math.abs(dx); }
+      else if (px + elWidth >= parentWidth) { dx = -Math.abs(dx); }
+      
+      if (py <= 0) { dy = Math.abs(dy); }
+      else if (py + elHeight >= parentHeight) { dy = -Math.abs(dy); }
+
+      x += dx;
+      y += dy;
+
+      el.style.left = `${x}%`;
+      el.style.top = `${y}%`;
+
+      animationFrameId = requestAnimationFrame(move);
     };
-    shift();
-    const t = setInterval(shift, 8000);
-    return () => clearInterval(t);
+
+    move();
+    return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
   if (!mounted) return null;
 
   return (
-    <>
-      {zones.map((z, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: `${z.baseX + (offsets[i]?.x ?? 0)}%`,
-            top:  `${z.baseY + (offsets[i]?.y ?? 0)}%`,
-            pointerEvents: 'none',
-            userSelect: 'none',
-            color: 'rgba(255,255,255,0.15)',
-            fontSize: '12px',
-            fontWeight: 600,
-            fontFamily: 'monospace',
-            whiteSpace: 'nowrap',
-            zIndex: 20,
-            transition: 'left 2s ease, top 2s ease',
-            textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-            letterSpacing: '0.4px',
-            transform: i % 2 === 1 ? 'rotate(-8deg)' : 'rotate(-5deg)',
-          }}
-        >
-          {label} · {time}
-        </div>
-      ))}
-    </>
+    <div
+      ref={markRef}
+      style={{
+        position: 'absolute',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        color: 'rgba(255,255,255,0.25)', // Mờ 25%
+        fontSize: '13px',
+        fontWeight: 600,
+        fontFamily: 'monospace',
+        whiteSpace: 'nowrap',
+        zIndex: 20,
+        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+        letterSpacing: '0.5px',
+      }}
+    >
+      {label} • IP: {ip} • {time}
+    </div>
   );
 }
 
@@ -553,7 +576,7 @@ export default function LearnPage() {
                   title={lesson.title}
                 />
                 {/* Multi-watermark overlaid on iframe */}
-                <MultiWatermark label={userEmail} />
+                <TikTokWatermark label={userEmail} />
               </div>
             ) : (
               // Spinner trong khi chờ progress load
@@ -586,7 +609,7 @@ export default function LearnPage() {
                 }}
               />
               {/* Multi-watermark on HTML5 player */}
-              <MultiWatermark label={userEmail} />
+              <TikTokWatermark label={userEmail} />
 
               {/* Controls */}
               <div
