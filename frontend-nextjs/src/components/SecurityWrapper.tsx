@@ -34,19 +34,31 @@ export default function SecurityWrapper() {
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("keydown", handleKeyDown);
 
-    // Bẫy debugger chống bật F12 từ menu trình duyệt (Tùy chọn cực đoan)
-    // const detectDevTools = () => {
-    //   const widthThreshold = window.outerWidth - window.innerWidth > 160;
-    //   const heightThreshold = window.outerHeight - window.innerHeight > 160;
-    //   if (widthThreshold || heightThreshold) {
-    //       // DevTools might be open
-    //   }
-    // };
-    // setInterval(detectDevTools, 1000);
+    // Bẫy Debugger chống mở DevTools từ trước
+    // Nếu họ mở sẵn F12 ở tab khác rồi paste link vào, bẫy này sẽ làm trình duyệt liên tục bị Pause, không thao tác được.
+    const debuggerTrap = setInterval(() => {
+      try {
+        // Xóa console liên tục để không đọc được log network/data
+        console.clear();
+        // Ép dừng thực thi nếu DevTools đang mở
+        Function("debugger")();
+      } catch (e) {}
+    }, 500);
+
+    // Bẫy phát hiện sự chênh lệch kích thước cửa sổ (khi DevTools được ghim vào cạnh màn hình)
+    const resizeTrap = setInterval(() => {
+      const widthThreshold = window.outerWidth - window.innerWidth > 160;
+      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+      if (widthThreshold || heightThreshold) {
+        document.body.innerHTML = "<div style='display:flex;height:100vh;width:100vw;background:#000;color:#ef4444;justify-content:center;align-items:center;font-size:24px;font-weight:bold;font-family:sans-serif;'>DevTools Access Blocked</div>";
+      }
+    }, 1000);
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("keydown", handleKeyDown);
+      clearInterval(debuggerTrap);
+      clearInterval(resizeTrap);
     };
   }, [pathname]);
 
