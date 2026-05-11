@@ -20,6 +20,8 @@ namespace ArtLab.Backend.Data
         public DbSet<LessonProgress> LessonProgresses { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
         public DbSet<LessonChat> LessonChats { get; set; }
+        public DbSet<ActiveSession> ActiveSessions { get; set; }
+        public DbSet<SecurityEvent> SecurityEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -33,6 +35,14 @@ namespace ArtLab.Backend.Data
             modelBuilder.Entity<Course>()
                 .Property(c => c.OriginalPrice)
                 .HasPrecision(18, 2);
+
+            // Index for fast concurrent-session lookup: find all sessions for a user+lesson
+            modelBuilder.Entity<ActiveSession>()
+                .HasIndex(s => new { s.UserId, s.LessonId });
+
+            // Index for admin event log queries by type and time
+            modelBuilder.Entity<SecurityEvent>()
+                .HasIndex(e => new { e.EventType, e.OccurredAt });
         }
     }
 }

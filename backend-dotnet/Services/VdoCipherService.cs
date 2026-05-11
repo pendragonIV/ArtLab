@@ -113,11 +113,43 @@ namespace ArtLab.Backend.Services
             return (videoId, payload);
         }
 
-        public async Task<(string otp, string playbackInfo)> GetPlaybackInfoAsync(string videoId)
+        /// <summary>
+        /// Lấy OTP + playbackInfo từ VdoCipher, kèm theo forensic watermark.
+        /// Annotation với alpha=0.0 vô hình với mắt thường nhưng tồn tại trong recording.
+        /// Hoạt động trên VdoCipher Business plan trở lên.
+        /// </summary>
+        public async Task<(string otp, string playbackInfo)> GetPlaybackInfoAsync(
+            string videoId,
+            int? userId = null,
+            string? userEmail = null,
+            string? clientIp = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, $"https://dev.vdocipher.com/api/videos/{videoId}/otp");
             request.Headers.Add("Authorization", $"Apisecret {_apiKey}");
-            var jsonBody = "{\"ttl\": 7200}";
+
+            // Build forensic watermark annotation (invisible, alpha=0.0)
+            // Text format: "UID:123|user@example.com|1.2.3.4" — traceable if video is leaked
+            string annotateJson = "";
+            if (userId.HasValue || !string.IsNullOrEmpty(userEmail))
+            {
+                var parts = new System.Text.StringBuilder();
+                if (userId.HasValue)   parts.Append($"UID:{userId.Value}");
+                if (!string.IsNullOrEmpty(userEmail)) parts.Append($"|{userEmail}");
+                if (!string.IsNullOrEmpty(clientIp))  parts.Append($"|{clientIp}");
+
+                // Escape for JSON string embedding
+                var watermarkText = parts.ToString()
+                    .Replace("\\", "\\\\")
+                    .Replace("\"", "\\\"");
+
+                // Build annotate JSON using concatenation to avoid C# brace-escaping issues
+                // VdoCipher annotate format: JSON array as string value
+                var annotateArray = "[{\"type\":\"rtext\",\"text\":\"" + watermarkText
+                    + "\",\"alpha\":\"0.00\",\"color\":\"0xFFFFFF\",\"size\":20,\"interval\":8000}]";
+                annotateJson = ",\"annotate\":\"" + annotateArray.Replace("\"", "\\\"") + "\"";
+            }
+
+            var jsonBody = $"{{\"ttl\": 3600{annotateJson}}}";
             request.Content = new StringContent(jsonBody, System.Text.Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request);

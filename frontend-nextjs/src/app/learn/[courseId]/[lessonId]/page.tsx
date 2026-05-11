@@ -9,6 +9,7 @@ import {
   ChevronLeft, ChevronDown, ChevronRight,
   Lock, Play, CheckCircle2, Volume2, VolumeX,
   Maximize, Pause, RotateCcw, MessageSquare, BookOpen,
+  ShieldAlert,
 } from "lucide-react";
 import styles from "./page.module.css";
 import LessonChat from "@/components/LessonChat/LessonChat";
@@ -171,6 +172,11 @@ export default function LearnPage() {
   // @ts-ignore
   const userEmail = session?.user?.email ?? session?.user?.name ?? "ArtLab User";
 
+  // ── Session management (Lớp 8: Concurrent session control) ──────────────
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [sessionBlocked, setSessionBlocked] = useState(false);
+  const sessionTokenRef = useRef<string | null>(null);
+
   const authHeaders = useCallback((): HeadersInit => {
     // @ts-ignore
     const token = session?.backendToken;
@@ -193,9 +199,13 @@ export default function LearnPage() {
     setPlaying(false);
     setProgress(0);
     setInitialProgress(0);
-    setProgressLoaded(false); // ẩn player cho đến khi progress được xác nhận
+    setProgressLoaded(false);
     lastSavedTimeRef.current = 0;
     progressRef.current = 0;
+    // Reset session state for new lesson
+    setSessionBlocked(false);
+    setSessionToken(null);
+    sessionTokenRef.current = null;
 
     const base = process.env.NEXT_PUBLIC_BACKEND_URL || `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}`;
     const lsKey = `artlab_progress_${lessonId}`;
@@ -224,11 +234,99 @@ export default function LearnPage() {
         progressRef.current = saved;
       }
       setLesson(lessonData);
-      setProgressLoaded(true); // trigger render player sau khi có progress
+      setProgressLoaded(true);
       setLoading(false);
     })
     .catch(() => setLoading(false));
   }, [lessonId, authHeaders]);
+
+  /* ── START SESSION — Lớp 8: Concurrent Device Block ────────────────────
+     Gọi sau khi lesson data đã load xong và session chưa bị block.
+     Nếu user đang xem trên thiết bị khác → hiện thông báo block.
+  ────────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!lesson || lesson.isLocked || !lesson.vdoCipherVideoId) return;
+    // @ts-ignore
+    const token = session?.backendToken;
+    if (!token) return; // chưa đăng nhập — không enforce session
+
+    const startSession = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/session/start`,
+          {
+            method: "POST",
+            headers: { ...authHeaders(), "Content-Type": "application/json" },
+            body: JSON.stringify({ lessonId }),
+          }
+        );
+
+        if (res.status === 409) {
+          // Thiết bị thứ 2 bị block
+          setSessionBlocked(true);
+          return;
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          setSessionToken(data.sessionToken);
+          sessionTokenRef.current = data.sessionToken;
+        }
+      } catch {
+        // Nếu lỗi mạng — không block user, chỉ skip session enforcement
+      }
+    };
+
+    startSession();
+  }, [lesson, lessonId, session, authHeaders]);
+
+  /* ── HEARTBEAT — ping server mỗi 20s để giữ session sống ───────────────
+     Dùng ref để không bị stale closure khi sessionToken thay đổi.
+  ────────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!sessionToken) return;
+
+    const intervalId = setInterval(async () => {
+      if (!sessionTokenRef.current) return;
+      try {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/session/heartbeat`,
+          {
+            method: "POST",
+            headers: { ...authHeaders(), "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionToken: sessionTokenRef.current }),
+          }
+        );
+      } catch { /* silent */ }
+    }, 20_000);
+
+    return () => clearInterval(intervalId);
+  }, [sessionToken, authHeaders]);
+
+  /* ── END SESSION on unmount — gửi DELETE khi rời trang ─────────────────
+     Dùng ref để đọc sessionToken hiện tại trong cleanup function.
+     sendBeacon để đảm bảo request gửi được kể cả khi đóng tab.
+  ────────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    return () => {
+      const tok = sessionTokenRef.current;
+      if (!tok) return;
+      // @ts-ignore
+      const bearerToken = (session as any)?.backendToken;
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/session/${lessonId}?token=${tok}`;
+      // sendBeacon hoạt động kể cả khi tab đóng
+      if (navigator.sendBeacon) {
+        const blob = new Blob([], { type: "application/json" });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: "DELETE",
+          headers: bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {},
+          keepalive: true,
+        }).catch(() => {});
+      }
+    };
+  }, [lessonId]); // intentionally minimal deps — ref always has latest token
 
   /* Save progress – server + localStorage fallback */
   const saveProgress = useCallback((currentTime: number, isCompleted: boolean) => {
@@ -476,6 +574,43 @@ export default function LearnPage() {
 
   if (loading && !lesson) {
     return <div className={styles.loadingScreen}><div className={styles.spinner} /></div>;
+  }
+
+  // ── Lớp 8: Concurrent Session Block UI ─────────────────────────────────
+  if (sessionBlocked) {
+    return (
+      <div className={styles.loadingScreen} style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
+        background: '#0a0a0f', color: '#fff', textAlign: 'center', padding: '40px'
+      }}>
+        <ShieldAlert size={64} color="#ef4444" />
+        <h2 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Phiên xem đang hoạt động trên thiết bị khác</h2>
+        <p style={{ color: '#9ca3af', maxWidth: '420px', lineHeight: 1.6 }}>
+          Tài khoản của bạn đang xem bài học này trên một thiết bị khác.
+          Vui lòng kết thúc phiên đó trước hoặc chờ 90 giây để tự động hết hạn.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+          <button
+            onClick={() => { setSessionBlocked(false); window.location.reload(); }}
+            style={{
+              padding: '10px 24px', borderRadius: '8px', border: 'none',
+              background: '#6366f1', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '14px'
+            }}
+          >
+            Thử lại
+          </button>
+          <Link href={`/course/${courseId}`}
+            style={{
+              padding: '10px 24px', borderRadius: '8px', border: '1px solid #374151',
+              background: 'transparent', color: '#9ca3af', fontWeight: 500, cursor: 'pointer',
+              fontSize: '14px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center'
+            }}
+          >
+            Về trang khoá học
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

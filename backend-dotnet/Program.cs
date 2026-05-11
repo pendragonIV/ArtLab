@@ -31,6 +31,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // VdoCipher Video service
 builder.Services.AddHttpClient<ArtLab.Backend.Services.VdoCipherService>();
 
+// Background service: cleans up expired video sessions every 60s
+builder.Services.AddHostedService<ArtLab.Backend.Services.SessionCleanupService>();
+
 // Configure CORS for Next.js frontend
 builder.Services.AddCors(options =>
 {

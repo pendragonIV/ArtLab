@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 using ArtLab.Backend.Data;
+using ArtLab.Backend.Models;
 using ArtLab.Backend.Services;
 
 namespace ArtLab.Backend.Controllers
@@ -62,7 +64,27 @@ namespace ArtLab.Backend.Controllers
             string? vdoCipherPlaybackInfo = null;
             if (canWatch && !string.IsNullOrEmpty(lesson.VdoCipherVideoId))
             {
-                var (otp, playbackInfo) = await _vdoCipher.GetPlaybackInfoAsync(lesson.VdoCipherVideoId);
+                // Resolve client IP (handles reverse proxy X-Forwarded-For)
+                var clientIp = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                               ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                // Fetch user email from DB for forensic watermark
+                string? userEmail = null;
+                var resolvedUserId = TryGetUserId();
+                if (resolvedUserId.HasValue)
+                {
+                    var dbUser = await _context.Users
+                        .AsNoTracking()
+                        .Select(u => new { u.Id, u.Email })
+                        .FirstOrDefaultAsync(u => u.Id == resolvedUserId.Value);
+                    userEmail = dbUser?.Email;
+                }
+
+                var (otp, playbackInfo) = await _vdoCipher.GetPlaybackInfoAsync(
+                    lesson.VdoCipherVideoId,
+                    userId: resolvedUserId,
+                    userEmail: userEmail,
+                    clientIp: clientIp);
                 vdoCipherOtp = otp;
                 vdoCipherPlaybackInfo = playbackInfo;
             }
