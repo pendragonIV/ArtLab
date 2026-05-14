@@ -155,8 +155,8 @@ export default function LearnPage() {
 
   const userEmail = session?.user?.email ?? session?.user?.name ?? "ArtLab User";
   const backendToken =
-    session && typeof (session as { backendToken?: unknown }).backendToken === "string"
-      ? (session as { backendToken: string }).backendToken
+    session && typeof (session as unknown as { backendToken?: unknown }).backendToken === "string"
+      ? (session as unknown as { backendToken: string }).backendToken
       : undefined;
   const jwtSub = getJwtPayloadSub(backendToken);
   const watermarkLabel = jwtSub !== undefined ? `${userEmail} · id:${jwtSub}` : userEmail;
