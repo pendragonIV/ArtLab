@@ -5,6 +5,7 @@ import { NextAuthProvider } from "@/components/Providers";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import FloatingChat from "@/components/FloatingChat";
 import SecurityWrapper from "@/components/SecurityWrapper";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -29,6 +30,7 @@ export default function RootLayout({
             <SecurityWrapper />
             {children}
             <FloatingChat />
+            <Analytics />
           </LanguageProvider>
         </NextAuthProvider>
       </body>
