@@ -98,5 +98,22 @@ namespace ArtLab.Backend.Controllers
             public string? Username { get; set; }
             public string? AvatarUrl { get; set; }
         }
+
+        // DELETE: api/profile/me — delete my account
+        [HttpDelete("me")]
+        [Authorize]
+        public async Task<IActionResult> DeleteMyAccount()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            // Depending on cascade rules, enrollments might be deleted automatically, 
+            // but we can be explicit or just rely on EF.
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { message = "Account deleted successfully." });
+        }
     }
 }

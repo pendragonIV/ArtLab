@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -34,6 +34,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"courses" | "settings">("courses");
   const [editName, setEditName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -78,6 +81,29 @@ export default function ProfilePage() {
       alert("Error saving");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      // @ts-ignore
+      const token = session!.backendToken;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/profile/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        alert("Account deleted successfully.");
+        await signOut({ callbackUrl: "/" });
+      } else {
+        alert("Failed to delete account.");
+      }
+    } catch {
+      alert("An error occurred while deleting account.");
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -212,10 +238,65 @@ export default function ProfilePage() {
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
+
+              {/* DANGER ZONE */}
+              <div className={styles.dangerZone}>
+                <h3 className={styles.dangerTitle}>Danger Zone</h3>
+                <p className={styles.dangerDesc}>
+                  Once you delete your account, there is no going back. Please be certain.
+                </p>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className={styles.deleteBtn}
+                >
+                  Delete Account
+                </button>
+              </div>
             </div>
           )}
         </div>
       </main>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>Delete Account</h3>
+            <p className={styles.modalText}>
+              This action cannot be undone. All your purchased courses, progress, and account data will be permanently deleted.
+              <br /><br />
+              Please type <span className={styles.modalHighlight}>{profile.email}</span> to confirm.
+            </p>
+            <input
+              type="text"
+              className={styles.modalInput}
+              value={deleteInput}
+              onChange={(e) => setDeleteInput(e.target.value)}
+              placeholder={profile.email}
+            />
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteInput("");
+                }}
+                className={styles.cancelBtn}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className={styles.confirmDeleteBtn}
+                disabled={deleteInput !== profile.email || deleting}
+              >
+                {deleting ? "Deleting..." : "Confirm Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );
