@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import styles from "./page.module.css";
 import { Play } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Course = {
   id: number;
@@ -17,6 +18,7 @@ type Course = {
 
 export default function MyCoursesPage() {
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,17 +57,17 @@ export default function MyCoursesPage() {
       <Header />
       <main className={styles.container}>
         <div className={styles.headerArea}>
-          <h1 className={styles.title}>My Classroom</h1>
-          <p className={styles.subtitle}>Welcome back, {session?.user?.name?.split(' ')[0]}! Pick up where you left off.</p>
+          <h1 className={styles.title}>{t('myClassroomTitle')}</h1>
+          <p className={styles.subtitle}>{t('welcomeBack')}, {session?.user?.name?.split(' ')[0]}! {t('pickUpWhereLeftOff')}</p>
         </div>
 
         {status === "loading" || loading ? (
-          <div className={styles.loadingSpinner}>Loading your courses...</div>
+          <div className={styles.loadingSpinner}>{t('loadingCourses')}</div>
         ) : courses.length === 0 ? (
           <div className={styles.emptyState}>
-            <h2>You haven't enrolled in any courses yet.</h2>
-            <p>Explore our library and start learning today!</p>
-            <Link href="/" className={styles.browseBtn}>Browse Courses</Link>
+            <h2>{t('noCoursesTitle')}</h2>
+            <p>{t('noCoursesDesc')}</p>
+            <Link href="/" className={styles.browseBtn}>{t('browseCoursesBtn')}</Link>
           </div>
         ) : (
           <div className={styles.courseGrid}>
@@ -85,11 +87,11 @@ export default function MyCoursesPage() {
                     <div className={styles.progressBar}>
                       <div className={styles.progressFill} style={{ width: '0%' }}></div>
                     </div>
-                    <span className={styles.progressText}>0% Complete</span>
+                    <span className={styles.progressText}>0% {t('completeText')}</span>
                   </div>
                   
                   <Link href={`/learn/${course.id}`} className={styles.continueBtn} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-                    Watch Now
+                    {t('watchNow')}
                   </Link>
                 </div>
               </div>

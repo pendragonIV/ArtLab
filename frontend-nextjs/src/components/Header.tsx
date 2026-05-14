@@ -19,48 +19,56 @@ type CourseResult = {
 const CATEGORIES = [
   {
     name: 'Illustration',
+    nameKey: 'catIllustration',
     icon: Palette,
     color: '#a78bfa',
     subs: ['Anatomy', 'Characters', 'Concept Art', 'Grisaille', 'Webtoon', 'Realistic', 'Fantasy Art'],
   },
   {
     name: '3D & Animation',
+    nameKey: 'cat3DAnimation',
     icon: Layers,
     color: '#60a5fa',
     subs: ['3D Modeling', 'Blender', 'Maya', '2D Animation', 'VFX', 'Motion Graphics'],
   },
   {
     name: 'Game Design',
+    nameKey: 'catGameDesign',
     icon: Gamepad2,
     color: '#fbbf24',
     subs: ['Game Art', 'Pixel Art', 'Level Design', 'Unity', 'Unreal Engine', 'Indie Dev'],
   },
   {
     name: 'Design',
+    nameKey: 'catDesign',
     icon: BookOpen,
     color: '#34d399',
     subs: ['Graphic Design', 'UI/UX', 'Brand Identity', 'Typography', 'Web Design'],
   },
   {
     name: 'Media',
+    nameKey: 'catMedia',
     icon: FileVideo,
     color: '#f97316',
     subs: ['Video Editing', 'Photography', 'Cinematography', 'Retouching', 'Color Grading'],
   },
   {
     name: 'Development',
+    nameKey: 'catDevelopment',
     icon: Code,
     color: '#22d3ee',
     subs: ['Web Dev', 'Mobile Apps', 'Machine Learning', 'Python', 'JavaScript'],
   },
   {
     name: 'Music & Audio',
+    nameKey: 'catMusic',
     icon: Music,
     color: '#fb7185',
     subs: ['Music Production', 'Sound Design', 'Mixing & Mastering', 'Film Scoring'],
   },
   {
     name: 'Lifestyle',
+    nameKey: 'catLifestyle',
     icon: Star,
     color: '#e879f9',
     subs: ['Fashion Design', 'Food Art', 'Calligraphy', 'Knitting', 'Pottery'],
@@ -186,7 +194,7 @@ export default function Header() {
                 onClick={() => setShowMobileMenu(false)}
                 style={item.highlight ? { color: '#facc15' } : {}}
               >
-                {item.label}
+                {t(item.labelKey as any)}
                 {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
               </Link>
             ))}
@@ -201,7 +209,7 @@ export default function Header() {
                 className={styles.mobileNavItem}
                 onClick={() => setShowMobileMenu(false)}
               >
-                {item.label}
+                {t(item.labelKey as any)}
               </Link>
             ))}
           </div>
@@ -215,7 +223,7 @@ export default function Header() {
                 className={styles.mobileNavItem}
                 onClick={() => setShowMobileMenu(false)}
               >
-                {cat.name}
+                {t(cat.nameKey as any)}
               </Link>
             ))}
           </div>
@@ -418,7 +426,7 @@ export default function Header() {
                       onMouseEnter={() => setActiveCat(i)}
                     >
                       <Icon size={15} color={i === activeCat ? cat.color : '#888'} />
-                      <span>{cat.name}</span>
+                      <span>{t(cat.nameKey as any)}</span>
                       <span className={styles.megaChevron}>›</span>
                     </button>
                   );
@@ -429,7 +437,7 @@ export default function Header() {
               <div className={styles.megaRight}>
                 <div className={styles.megaRightHeader}>
                   {ActiveIcon && <ActiveIcon size={16} color={CATEGORIES[activeCat].color} />}
-                  <span style={{ color: CATEGORIES[activeCat].color }}>{CATEGORIES[activeCat].name}</span>
+                  <span style={{ color: CATEGORIES[activeCat].color }}>{t(CATEGORIES[activeCat].nameKey as any)}</span>
                 </div>
                 <div className={styles.megaSubGrid}>
                   {CATEGORIES[activeCat].subs.map(sub => (
@@ -449,7 +457,7 @@ export default function Header() {
                   className={styles.megaViewAll}
                   onClick={() => setShowMegaMenu(false)}
                 >
-                  View all {CATEGORIES[activeCat].name} →
+                  {t('viewAll')} {t(CATEGORIES[activeCat].nameKey as any)} →
                 </Link>
               </div>
             </div>
@@ -464,7 +472,7 @@ export default function Header() {
               href={item.href}
               className={`${styles.navItem} ${item.highlight ? styles.navItemHighlight : ''}`}
             >
-              {item.label}
+              {t(item.labelKey as any)}
               {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
             </Link>
           ))}
@@ -473,7 +481,7 @@ export default function Header() {
 
           {NAV_NORMAL.map(item => (
             <Link key={item.href} href={item.href} className={styles.navItemNormal}>
-              {item.label}
+              {t(item.labelKey as any)}
             </Link>
           ))}
         </nav>
