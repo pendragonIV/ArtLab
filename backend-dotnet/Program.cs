@@ -8,6 +8,9 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5149";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // Allow large video uploads (up to 2 GB) via Kestrel
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
