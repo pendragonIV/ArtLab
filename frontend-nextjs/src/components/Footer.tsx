@@ -1,8 +1,11 @@
 import Link from 'next/link';
 import { Globe, MessageSquare, MonitorPlay } from 'lucide-react';
 import styles from './Footer.module.css';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
@@ -11,7 +14,7 @@ export default function Footer() {
             Art<span className={styles.accent}>Lab</span>
           </Link>
           <p className={styles.description}>
-            The ultimate platform for digital artists. Learn from the best and master your craft with premium video courses and exclusive project files.
+            {t('footerDesc')}
           </p>
           <div className={styles.socials}>
             <Link href="#" className={styles.socialLink}><Globe size={20} /></Link>
@@ -22,27 +25,27 @@ export default function Footer() {
 
         <div className={styles.linksBox}>
           <div className={styles.linkGroup}>
-            <h4 className={styles.linkTitle}>Platform</h4>
-            <Link href="/courses" className={styles.linkItem}>All Courses</Link>
-            <Link href="/instructors" className={styles.linkItem}>Instructors</Link>
-            <Link href="/pricing" className={styles.linkItem}>Pricing</Link>
-            <Link href="/faq" className={styles.linkItem}>FAQ</Link>
+            <h4 className={styles.linkTitle}>{t('footerPlatform')}</h4>
+            <Link href="/courses" className={styles.linkItem}>{t('footerAllCourses')}</Link>
+            <Link href="/instructors" className={styles.linkItem}>{t('footerInstructors')}</Link>
+            <Link href="/pricing" className={styles.linkItem}>{t('footerPricing')}</Link>
+            <Link href="/faq" className={styles.linkItem}>{t('footerFAQ')}</Link>
           </div>
           <div className={styles.linkGroup}>
-            <h4 className={styles.linkTitle}>Company</h4>
-            <Link href="/about" className={styles.linkItem}>About Us</Link>
-            <Link href="/careers" className={styles.linkItem}>Careers</Link>
-            <Link href="/blog" className={styles.linkItem}>Blog</Link>
-            <Link href="/contact" className={styles.linkItem}>Contact</Link>
+            <h4 className={styles.linkTitle}>{t('footerCompany')}</h4>
+            <Link href="/about" className={styles.linkItem}>{t('footerAbout')}</Link>
+            <Link href="/careers" className={styles.linkItem}>{t('footerCareers')}</Link>
+            <Link href="/blog" className={styles.linkItem}>{t('footerBlog')}</Link>
+            <Link href="/contact" className={styles.linkItem}>{t('footerContact')}</Link>
           </div>
         </div>
       </div>
 
       <div className={styles.bottomBar}>
-        <p>© 2026 ArtLab. All rights reserved.</p>
+        <p>{t('footerRights')}</p>
         <div className={styles.legalLinks}>
-          <Link href="/terms" className={styles.legalLink}>Terms of Service</Link>
-          <Link href="/privacy" className={styles.legalLink}>Privacy Policy</Link>
+          <Link href="/terms" className={styles.legalLink}>{t('footerTerms')}</Link>
+          <Link href="/privacy" className={styles.legalLink}>{t('footerPrivacy')}</Link>
         </div>
       </div>
     </footer>

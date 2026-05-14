@@ -1,26 +1,28 @@
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
 import styles from './CTABanner.module.css';
-
-const badges = ['No subscription required', 'Lifetime access', '100% secure checkout'];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CTABanner() {
+  const { t } = useLanguage();
+  const badges = [t('ctaBadge1'), t('ctaBadge2'), t('ctaBadge3')];
+
   return (
     <section className={styles.section}>
-      <p className={styles.eyebrow}>✦ Limited Time Offer</p>
+      <p className={styles.eyebrow}>{t('ctaEyebrow')}</p>
       <h2 className={styles.title}>
-        Ready to Elevate<br />Your Creative Career?
+        {t('ctaTitle').split('\n').map((line: string, i: number) => (
+          <span key={i}>{line}{i < t('ctaTitle').split('\n').length - 1 && <br />}</span>
+        ))}
       </h2>
-      <p className={styles.subtitle}>
-        Join 50,000+ students today and get instant access to premium courses, project files, and mentorship from industry veterans.
-      </p>
+      <p className={styles.subtitle}>{t('ctaSubtitle')}</p>
 
       <div className={styles.btnGroup}>
         <Link href="/register" className={styles.ctaBtn}>
-          Get Started for Free →
+          {t('ctaBtn1')}
         </Link>
         <Link href="/series" className={styles.secondaryBtn}>
-          Browse Courses
+          {t('ctaBtn2')}
         </Link>
       </div>
 

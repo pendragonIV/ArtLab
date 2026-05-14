@@ -1,33 +1,34 @@
 import { Shield, Clock, FileBadge } from 'lucide-react';
 import styles from './TrustSection.module.css';
-
-const trustItems = [
-  {
-    icon: Shield,
-    title: 'DRM Protected',
-    desc: 'Our videos use industry-standard DRM (Widevine/FairPlay via VdoCipher) to deter unauthorized copying and support fair compensation for artists. No streaming platform can block every screen-recording scenario.',
-  },
-  {
-    icon: FileBadge,
-    title: 'Project Files Included',
-    desc: 'Get access to brushes, 3D models, source files, and assignments to follow along with the instructors.',
-  },
-  {
-    icon: Clock,
-    title: 'Lifetime Access',
-    desc: 'Buy once, own forever. Learn at your own pace without monthly subscriptions or expiration dates.',
-  }
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function TrustSection() {
+  const { t } = useLanguage();
+
+  const trustItems = [
+    {
+      icon: Shield,
+      title: t('trustItem1Title'),
+      desc: t('trustItem1Desc'),
+    },
+    {
+      icon: FileBadge,
+      title: t('trustItem2Title'),
+      desc: t('trustItem2Desc'),
+    },
+    {
+      icon: Clock,
+      title: t('trustItem3Title'),
+      desc: t('trustItem3Desc'),
+    }
+  ];
+
   return (
     <section className={styles.section}>
       <div className={styles.header}>
-        <p className={styles.eyebrow}>Why ArtLab</p>
-        <h2 className={styles.title}>Built for Serious Creatives</h2>
-        <p className={styles.subtitle}>
-          We provide the highest quality learning experience for aspiring digital artists.
-        </p>
+        <p className={styles.eyebrow}>{t('trustEyebrow')}</p>
+        <h2 className={styles.title}>{t('trustTitle')}</h2>
+        <p className={styles.subtitle}>{t('trustSubtitle')}</p>
       </div>
 
       <div className={styles.grid}>
