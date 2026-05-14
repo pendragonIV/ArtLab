@@ -1,3 +1,5 @@
+"use client";
+
 import { Shield, Clock, FileBadge } from 'lucide-react';
 import styles from './TrustSection.module.css';
 import { useLanguage } from '@/contexts/LanguageContext';

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Globe, MessageSquare, MonitorPlay } from 'lucide-react';
 import styles from './Footer.module.css';
