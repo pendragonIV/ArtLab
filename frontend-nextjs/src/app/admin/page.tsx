@@ -342,13 +342,17 @@ export default function AdminDashboard() {
                         </td>
                         <td data-label="Joined">{new Date(user.createdAt).toLocaleDateString()}</td>
                         <td data-label="Actions">
-                          {/* @ts-ignore */}
-                          <button className={styles.actionBtn} style={{ background: user.isBanned ? '#10b981' : '#f59e0b', color: '#fff', borderColor: 'transparent', marginRight: '8px' }} onClick={() => handleToggleBan(user.id, user.isBanned || false)}>
-                            {/* @ts-ignore */}
-                            {user.isBanned ? 'Unban' : 'Ban'}
-                          </button>
-                          {(session as any)?.role === 'Admin' && (
-                            <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteUser(user.id)}>Delete</button>
+                          {String(user.id) !== currentUserId && (
+                            <>
+                              {/* @ts-ignore */}
+                              <button className={styles.actionBtn} style={{ background: user.isBanned ? '#10b981' : '#f59e0b', color: '#fff', borderColor: 'transparent', marginRight: '8px' }} onClick={() => handleToggleBan(user.id, user.isBanned || false)}>
+                                {/* @ts-ignore */}
+                                {user.isBanned ? 'Unban' : 'Ban'}
+                              </button>
+                              {(session as any)?.role === 'Admin' && (
+                                <button className={styles.actionBtn} style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => handleDeleteUser(user.id)}>Delete</button>
+                              )}
+                            </>
                           )}
                         </td>
                       </tr>
