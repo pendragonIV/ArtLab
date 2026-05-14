@@ -1,10 +1,25 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import { LayoutDashboard, BookOpen, Users, DollarSign, Video, Upload, CheckCircle2, Loader2, Menu } from "lucide-react";
 import styles from "./page.module.css";
+
+function getJwtSub(token: string | undefined): string | null {
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // .NET JWT dùng claim "sub" hoặc NameIdentifier
+    return (
+      payload.sub ??
+      payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ??
+      null
+    );
+  } catch {
+    return null;
+  }
+}
 
 type Stats = {
   totalUsers: number;
@@ -115,26 +130,35 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleRoleChange = async (id: number, newRole: string) => {
+  const currentUserId = useMemo(
+    () => getJwtSub((session as any)?.backendToken),
+    [(session as any)?.backendToken]
+  );
+
+  const handleChangeRole = async (userId: number, newRole: string) => {
+    if (String(userId) === currentUserId) {
+      alert("Bạn không thể tự đổi role của chính mình.");
+      return;
+    }
     try {
       // @ts-ignore
       const token = session.backendToken;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/users/${id}/role`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/admin/users/${userId}/role`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ role: newRole })
       });
       if (res.ok) {
-        alert("Role updated successfully");
         fetchData();
       } else {
-        const errorText = await res.text();
-        alert("Failed to update role: " + errorText);
+        const err = await res.json().catch(() => ({}));
+        alert(err.message ?? "Không thể đổi role.");
       }
-    } catch (err) {
-      alert("Error updating role");
+    } catch {
+      alert("Lỗi kết nối khi đổi role.");
     }
   };
+
 
   const handleDeleteCourse = async (id: number) => {
     if (!confirm("Are you sure you want to delete this course and ALL its videos?")) return;
@@ -290,24 +314,26 @@ export default function AdminDashboard() {
                         <td data-label="Name" style={{ fontWeight: 500 }}>{user.name}</td>
                         <td data-label="Email">{user.email}</td>
                         <td data-label="Role">
-                          {(session as any)?.role === 'Admin' && user.id !== (session as any)?.user?.id ? (
-                            <select 
-                              className={styles.roleSelect} 
-                              value={user.role} 
-                              onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          {String(user.id) === currentUserId ? (
+                            <span className={styles.badge} style={{
+                              background: user.role === 'Admin' ? '#fef2f2' : user.role === 'Moderator' ? '#fdf4ff' : '#e0e7ff',
+                              color: user.role === 'Admin' ? '#ef4444' : user.role === 'Moderator' ? '#c026d3' : '#4f46e5',
+                              cursor: 'not-allowed',
+                              opacity: 0.8
+                            }} title="Không thể đổi role của chính bạn">
+                              {user.role} (bạn)
+                            </span>
+                          ) : (
+                            <select
+                              className={styles.roleSelect}
+                              value={user.role}
+                              onChange={(e) => handleChangeRole(user.id, e.target.value)}
                             >
                               <option value="Student">Student</option>
                               <option value="Instructor">Tutor</option>
                               <option value="Moderator">Moderator</option>
                               <option value="Admin">Admin</option>
                             </select>
-                          ) : (
-                            <span className={styles.badge} style={{ 
-                              background: user.role === 'Admin' ? '#fef2f2' : user.role === 'Moderator' ? '#fdf4ff' : '#e0e7ff', 
-                              color: user.role === 'Admin' ? '#ef4444' : user.role === 'Moderator' ? '#c026d3' : '#4f46e5' 
-                            }}>
-                              {user.role}
-                            </span>
                           )}
                         </td>
                         <td data-label="Joined">{new Date(user.createdAt).toLocaleDateString()}</td>

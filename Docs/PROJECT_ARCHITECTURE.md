@@ -50,5 +50,5 @@ graph LR
 
 ## 4. Tích hợp Bên thứ ba (Third-party Services)
 
-- **Video Streaming & Bảo vệ Bản quyền:** VdoCipher. Video được host tại VdoCipher và mã hóa bằng DRM (Widevine/FairPlay). Backend chỉ lưu trữ `VideoId` và gọi API của VdoCipher để lấy `OTP` cho phép Frontend phát video.
+- **Video Streaming & Bảo vệ Bản quyền:** VdoCipher. Video được host tại VdoCipher và mã hóa bằng DRM (Widevine/FairPlay). Backend chỉ lưu trữ `VideoId` và gọi API của VdoCipher để lấy `OTP` cho phép Frontend phát video. Trang học overlay **watermark** (email + user id từ JWT + thời gian) để hỗ trợ truy vết; **không** cam kết chặn hoàn toàn quay màn hình / Discord — xem [CONTENT_PROTECTION_OTT.md](CONTENT_PROTECTION_OTT.md).
 - **Database:** Microsoft SQL Server (hoặc PostgreSQL tùy môi trường).

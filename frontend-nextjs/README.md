@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ArtLab — frontend (Next.js)
 
-## Getting Started
+UI của ArtLab: **Next.js 16**, **React 19**, TypeScript strict, **NextAuth**, ESLint (`eslint-config-next`).
 
-First, run the development server:
+## Yêu cầu
+
+- Node.js (khuyến nghị LTS, tương thích với Next 16)
+- npm (hoặc pnpm/yarn nếu bạn cấu hình tương đương)
+
+## Cài đặt
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Lệnh thường dùng
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Lệnh | Mục đích |
+|------|----------|
+| `npm run dev` | Dev server: [http://localhost:3000](http://localhost:3000) |
+| `npm run build` | Build production |
+| `npm run start` | Chạy bản build sau `npm run build` |
+| `npm run lint` | ESLint toàn project (`src/`) — **nên chạy trước khi mở PR** |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Kiểm tra chất lượng (lint)
 
-## Learn More
+Chạy từ thư mục này:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Baseline hiện tại:** `npm run lint` vẫn **chưa pass** (nhiều errors, chủ yếu TypeScript strict và React hooks). Chạy lệnh trên để xem danh sách và số liệu cập nhật. Các rule hay gặp:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `@typescript-eslint/no-explicit-any` — tránh `any`, khai báo kiểu rõ
+- `@typescript-eslint/ban-ts-comment` — ưu tiên `@ts-expect-error` thay cho `@ts-ignore`
+- `react-hooks/set-state-in-effect` / `exhaustive-deps` — pattern `useEffect` và dependency array
+- `react/no-unescaped-entities` — ký tự nháy trong JSX
+- `@next/next/no-img-element` — ưu tiên `next/image` khi phù hợp
 
-## Deploy on Vercel
+Mục tiêu: `npm run lint` thoát mã **0** trên CI và máy local trước khi merge.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Cấu trúc gợi ý
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/` — App Router (trang, layout, API routes)
+- `src/components/` — component dùng chung
+- `src/contexts/`, `src/lib/` — context, HTTP, i18n, v.v.
+
+## Backend
+
+API và auth JWT do **ASP.NET** (thư mục `backend-dotnet/` ở root repo). Biến môi trường và URL API — xem quy tắc dự án trong `.cursor/rules/` (frontend env / endpoints).

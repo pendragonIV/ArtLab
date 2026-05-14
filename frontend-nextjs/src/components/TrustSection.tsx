@@ -5,7 +5,7 @@ const trustItems = [
   {
     icon: Shield,
     title: 'DRM Protected',
-    desc: 'Our videos are protected with industry-standard DRM to prevent piracy and ensure artists are fairly compensated.',
+    desc: 'Our videos use industry-standard DRM (Widevine/FairPlay via VdoCipher) to deter unauthorized copying and support fair compensation for artists. No streaming platform can block every screen-recording scenario.',
   },
   {
     icon: FileBadge,

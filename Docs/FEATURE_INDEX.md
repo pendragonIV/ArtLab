@@ -33,6 +33,9 @@ Controllers nằm ở `backend-dotnet/Controllers/*.cs`:
 - Tutor: `TutorController.cs`
 - Video DRM (VdoCipher): `VdoCipherAdminController.cs`
 
+## Kiến thức chung (OTT / DRM)
+- Bảo vệ nội dung stream (Netflix-class, ảnh, giới hạn): `Docs/CONTENT_PROTECTION_OTT.md`
+
 ## Feature specs
 - Auth: `Docs/Features/Auth/FEATURE_SPEC.md`
 - Courses: `Docs/Features/Courses/FEATURE_SPEC.md`
