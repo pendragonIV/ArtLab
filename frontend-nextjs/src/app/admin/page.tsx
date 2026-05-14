@@ -58,7 +58,11 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     // @ts-ignore
     const token = session?.backendToken;
-    if (!token) return;
+    console.log("FETCH DATA TRIGGERED. Session:", session, "Token:", token);
+    if (!token) {
+      console.log("No token, aborting fetchData");
+      return;
+    }
 
     try {
       const [statsRes, coursesRes, usersRes] = await Promise.all([

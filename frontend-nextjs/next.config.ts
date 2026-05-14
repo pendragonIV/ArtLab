@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
               "media-src 'self' blob: https://*.vdocipher.com https://*.vdostream.net",
               "frame-src 'self' https://player.vdocipher.com",
               // API calls
-              "connect-src 'self' https://*.vdocipher.com https://api.ipify.org",
+              "connect-src 'self' http://localhost:5149 https://*.up.railway.app https://*.vdocipher.com https://api.ipify.org",
               "img-src 'self' data: blob: https:",
               // Chặn mọi object/embed
               "object-src 'none'",
