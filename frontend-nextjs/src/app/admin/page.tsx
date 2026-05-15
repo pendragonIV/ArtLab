@@ -48,6 +48,8 @@ type UserData = {
   createdAt: string;
 };
 
+const COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const { lang, setLang } = useLanguage();
@@ -60,10 +62,10 @@ export default function AdminDashboard() {
   const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   
-  const [salesData, setSalesData] = useState([]);
-  const [userGrowthData, setUserGrowthData] = useState([]);
-  const [categoryData, setCategoryData] = useState([]);
-  const [sourceData, setSourceData] = useState([]);
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [sourceData, setSourceData] = useState<any[]>([]);
 
   const currentLangMeta = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
   const t = (key: keyof typeof TRANSLATIONS.en) => {

@@ -47,16 +47,19 @@ export default function TutorDashboard() {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
 
-  const [earningsData, setEarningsData] = useState([]);
-  const [coursePerformance, setCoursePerformance] = useState([]);
-  const [retentionData, setRetentionData] = useState([]);
-  const [funnelData, setFunnelData] = useState([]);
-  const [revenueByCourseData, setRevenueByCourseData] = useState([]);
+  const [earningsData, setEarningsData] = useState<any[]>([]);
+  const [coursePerformance, setCoursePerformance] = useState<any[]>([]);
+  const [retentionData, setRetentionData] = useState<any[]>([]);
+  const [funnelData, setFunnelData] = useState<any[]>([]);
+  const [revenueByCourseData, setRevenueByCourseData] = useState<any[]>([]);
 
   // Profile form state
   const [profile, setProfile] = useState({ headline: "", bio: "", youtubeUrl: "", twitterUrl: "", portfolioImagesJson: "" });
   const [editProfile, setEditProfile] = useState({ headline: "", bio: "", youtubeUrl: "", twitterUrl: "" });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isDraggingThumb, setIsDraggingThumb] = useState(false);
+  const [portfolioUrlInput, setPortfolioUrlInput] = useState("");
 
   // New course form
   const [newCourse, setNewCourse] = useState({
@@ -86,6 +89,7 @@ export default function TutorDashboard() {
   // Add Lesson
   const [addingLessonChapterId, setAddingLessonChapterId] = useState<number | null>(null);
   const [newLessonTitle, setNewLessonTitle] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Dashboard Analytics Filter
   const [selectedStatsCourseId, setSelectedStatsCourseId] = useState<number | 'all'>('all');
@@ -755,7 +759,7 @@ export default function TutorDashboard() {
                         <XAxis dataKey="minute" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
                         <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} formatter={(value: number) => [`${value}%`, 'Retention']} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} formatter={(value: any) => [`${value}%`, 'Retention']} />
                         <Line type="monotone" dataKey="retention" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 0 }} />
                       </LineChart>
                     </ResponsiveContainer>
@@ -782,7 +786,7 @@ export default function TutorDashboard() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} formatter={(value: number) => `$${value}`} />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} formatter={(value: any) => `$${value}`} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
