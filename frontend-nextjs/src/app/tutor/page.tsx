@@ -3,8 +3,14 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, DollarSign, Users, Plus, Star, CheckCircle2, Loader2, Pencil, Trash2, Menu } from "lucide-react";
+import { LayoutDashboard, BookOpen, DollarSign, Users, Plus, Star, CheckCircle2, Loader2, Pencil, Trash2, Menu, TrendingUp, Activity, PlayCircle, ChevronDown, Globe, User, LogOut } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, Cell, LineChart, Line, PieChart, Pie, ComposedChart } from "recharts";
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGES, TRANSLATIONS } from '@/lib/translations';
+import { signOut } from 'next-auth/react';
 import styles from "../admin/page.module.css"; // Reuse admin styles
+
+const COLORS = ['#06b6d4', '#8b5cf6', '#10b981', '#f59e0b'];
 
 type TutorStats = {
   totalCourses: number;
@@ -27,15 +33,29 @@ type Course = {
 
 export default function TutorDashboard() {
   const { data: session, status } = useSession();
+  const { lang, setLang } = useLanguage();
+  const currentLangMeta = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
+  const t = (key: keyof typeof TRANSLATIONS.en) => {
+    return (TRANSLATIONS[lang as keyof typeof TRANSLATIONS] as any)?.[key] || TRANSLATIONS.en[key];
+  };
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState<TutorStats | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showAvatarDropdown, setShowAvatarDropdown] = useState(false);
+
+  const [earningsData, setEarningsData] = useState([]);
+  const [coursePerformance, setCoursePerformance] = useState([]);
+  const [retentionData, setRetentionData] = useState([]);
+  const [funnelData, setFunnelData] = useState([]);
+  const [revenueByCourseData, setRevenueByCourseData] = useState([]);
 
   // Profile form state
   const [profile, setProfile] = useState({ headline: "", bio: "", youtubeUrl: "", twitterUrl: "", portfolioImagesJson: "" });
+  const [editProfile, setEditProfile] = useState({ headline: "", bio: "", youtubeUrl: "", twitterUrl: "" });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // New course form
@@ -47,7 +67,6 @@ export default function TutorDashboard() {
   // Edit course modal
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editForm, setEditForm] = useState({ title: "", category: "Illustration", price: "", originalPrice: "", thumbnailUrl: "", isClasscutEnabled: false });
-  const [isDraggingThumb, setIsDraggingThumb] = useState(false);
 
   // Video upload & curriculum state
   type LessonWithStatus = { id: number; title: string; isFreePreview: boolean; durationSeconds: number; vdoCipherVideoId?: string; };
@@ -60,7 +79,6 @@ export default function TutorDashboard() {
   const [uploadingLessonId, setUploadingLessonId] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Record<number, string>>({}); // lessonId -> status msg
   const [uploadPercent, setUploadPercent] = useState<Record<number, number>>({}); // lessonId -> 0-100
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeUploadLesson, setActiveUploadLesson] = useState<LessonWithStatus | null>(null);
   // Add Chapter modal
   const [showAddChapterModal, setShowAddChapterModal] = useState(false);
@@ -68,20 +86,14 @@ export default function TutorDashboard() {
   // Add Lesson
   const [addingLessonChapterId, setAddingLessonChapterId] = useState<number | null>(null);
   const [newLessonTitle, setNewLessonTitle] = useState("");
-  // Portfolio drag & drop
-  const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const [portfolioUrlInput, setPortfolioUrlInput] = useState("");
-
+  
+  // Dashboard Analytics Filter
+  const [selectedStatsCourseId, setSelectedStatsCourseId] = useState<number | 'all'>('all');
 
   useEffect(() => {
     if (status === "unauthenticated") {
       window.location.href = "/";
       return;
-    }
-    // Check if user is Instructor or Admin
-    if (session?.user && (session as any).role !== "Instructor" && (session as any).role !== "Admin") {
-       window.location.href = "/";
-       return;
     }
     
     if (session) {
@@ -90,34 +102,76 @@ export default function TutorDashboard() {
   }, [session, status]);
 
   const fetchData = async () => {
-    setLoading(true);
+    if (courses.length === 0 && !stats) setLoading(true);
     try {
       const token = (session as any).backendToken;
       
-      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (statsRes.ok) setStats(await statsRes.json());
+      const [statsRes, advStatsRes, coursesRes, profileRes] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/advanced-stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
 
-      const coursesRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/courses`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      if (statsRes.ok) setStats(await statsRes.json());
       if (coursesRes.ok) setCourses(await coursesRes.json());
-      
-      const profileRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
       if (profileRes.ok) {
         const p = await profileRes.json();
-        setProfile({ headline: p.headline || "", bio: p.bio || "", youtubeUrl: p.youtubeUrl || "", twitterUrl: p.twitterUrl || "", portfolioImagesJson: p.portfolioImagesJson || "" });
+        setProfile(p);
+        setEditProfile({
+          headline: p.headline || '',
+          bio: p.bio || '',
+          youtubeUrl: p.youtubeUrl || '',
+          twitterUrl: p.twitterUrl || ''
+        });
       }
-      
+      if (advStatsRes.ok) {
+        const advData = await advStatsRes.json();
+        if (advData.earningsData?.length > 0) setEarningsData(advData.earningsData.reverse());
+        if (advData.coursePerformance?.length > 0) setCoursePerformance(advData.coursePerformance);
+        if (advData.retentionData?.length > 0) setRetentionData(advData.retentionData);
+        if (advData.funnelData?.length > 0) setFunnelData(advData.funnelData);
+        if (advData.revenueByCourseData?.length > 0) setRevenueByCourseData(advData.revenueByCourseData);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchAdvStats = async () => {
+      if (!session) return;
+      try {
+        const token = (session as any).backendToken;
+        const url = selectedStatsCourseId === 'all' 
+          ? `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/advanced-stats`
+          : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/advanced-stats?courseId=${selectedStatsCourseId}`;
+          
+        const advStatsRes = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (advStatsRes.ok) {
+          const advData = await advStatsRes.json();
+          setEarningsData(advData.earningsData?.reverse() || []);
+          setCoursePerformance(advData.coursePerformance || []);
+          setRetentionData(advData.retentionData || []);
+          setFunnelData(advData.funnelData || []);
+          setRevenueByCourseData(advData.revenueByCourseData || []);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchAdvStats();
+  }, [selectedStatsCourseId, session]);
 
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,10 +220,11 @@ export default function TutorDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify(profile)
+        body: JSON.stringify(editProfile)
       });
       if (res.ok) {
         alert("Profile updated successfully!");
+        fetchData();
       } else {
         alert("Failed to update profile.");
       }
@@ -374,7 +429,6 @@ export default function TutorDashboard() {
     setUploadProgress(p => ({ ...p, [lessonId]: "Getting upload credentials..." }));
 
     try {
-      // ── Bước 1: Lấy S3 credentials từ backend ─────────────────────────────
       let credRes: Response;
       try {
         credRes = await fetch(
@@ -401,10 +455,8 @@ export default function TutorDashboard() {
       const creds = await credRes.json();
       setUploadProgress(p => ({ ...p, [lessonId]: "Uploading to VdoCipher..." }));
 
-      // ── Bước 2: Browser upload thẳng lên S3 của VdoCipher ─────────────────
       await new Promise<void>((resolve) => {
         const formData = new FormData();
-        // Thứ tự fields PHẢI theo đúng S3 policy (text fields trước, file cuối)
         formData.append("policy",            creds.policy);
         formData.append("key",               creds.key);
         formData.append("x-amz-signature",   creds.xAmzSignature);
@@ -413,7 +465,7 @@ export default function TutorDashboard() {
         formData.append("x-amz-credential",  creds.xAmzCredential);
         formData.append("success_action_status",   "201");
         formData.append("success_action_redirect", "");
-        formData.append("file", file); // file phải là field cuối cùng
+        formData.append("file", file);
 
         const xhr = new XMLHttpRequest();
 
@@ -428,7 +480,6 @@ export default function TutorDashboard() {
         xhr.addEventListener("load", async () => {
           if (xhr.status === 201) {
             setUploadProgress(p => ({ ...p, [lessonId]: "Saving..." }));
-            // ── Bước 3: Báo backend lưu videoId vào DB ──────────────────────
             try {
               const attachRes = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/tutor/lessons/${lessonId}/attach-video`,
@@ -441,11 +492,9 @@ export default function TutorDashboard() {
               if (attachRes.ok) {
                 const attachData = await attachRes.json();
                 if (attachData.durationSet) {
-                  // Duration đã có ngay (ít khi xảy ra)
                   setUploadProgress(p => ({ ...p, [lessonId]: `✅ Done! ${Math.floor((attachData.durationSeconds ?? 0) / 60)}m` }));
                 } else {
                   setUploadProgress(p => ({ ...p, [lessonId]: "✅ Uploaded! ⚙️ Encoding..." }));
-                  // Poll sync-duration cho đến khi VdoCipher encode xong
                   let attempts = 0;
                   const pollDuration = async () => {
                     attempts++;
@@ -500,14 +549,12 @@ export default function TutorDashboard() {
       });
 
     } catch (err: any) {
-      console.error("[VideoUpload] Unexpected error:", err);
       setUploadProgress(p => ({ ...p, [lessonId]: `❌ ${err?.message || "Unexpected error"}` }));
       setUploadPercent(p => ({ ...p, [lessonId]: 0 }));
       setUploadingLessonId(null);
       setActiveUploadLesson(null);
     }
   };
-
 
   const handleVideoDelete = async (lessonId: number, lessonTitle: string) => {
     if (!confirm(`Delete video for "${lessonTitle}"? This cannot be undone.`)) return;
@@ -529,7 +576,14 @@ export default function TutorDashboard() {
     }
   };
 
-  if (status === "loading" || loading) return <div className={styles.loading}>Loading Tutor Studio...</div>;
+  if ((loading && !stats) || (status === "loading" && !session)) {
+    return (
+      <div className={styles.loaderContainer}>
+        <div className={styles.spinner} style={{ borderTopColor: '#06b6d4', width: '40px', height: '40px' }}></div>
+        <div className={styles.loaderText} style={{ color: '#06b6d4', fontWeight: 600 }}>ArtLab Studio Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.adminLayout}>
@@ -537,27 +591,18 @@ export default function TutorDashboard() {
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoArea}>
           <Link href="/">
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>ArtLab <span style={{color: '#f59e0b'}}>Tutor</span></span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>ArtLab <span style={{color: '#06b6d4'}}>Tutor</span></span>
           </Link>
         </div>
         <nav className={styles.nav}>
-          <button 
-            className={`${styles.navItem} ${activeTab === 'dashboard' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("dashboard")}
-          >
-            <LayoutDashboard size={20} /> Studio
+          <button className={`${styles.navItem} ${activeTab === 'dashboard' ? styles.activeNav : ''}`} onClick={() => setActiveTab("dashboard")}>
+            <LayoutDashboard size={20} /> {t('tutorStudio') || 'Studio'}
           </button>
-          <button 
-            className={`${styles.navItem} ${activeTab === 'courses' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("courses")}
-          >
-            <BookOpen size={20} /> My Courses
+          <button className={`${styles.navItem} ${activeTab === 'courses' ? styles.activeNav : ''}`} onClick={() => setActiveTab("courses")}>
+            <BookOpen size={20} /> {t('myCourses')}
           </button>
-          <button 
-            className={`${styles.navItem} ${activeTab === 'profile' ? styles.activeNav : ''}`}
-            onClick={() => setActiveTab("profile")}
-          >
-            <Users size={20} /> Instructor Profile
+          <button className={`${styles.navItem} ${activeTab === 'profile' ? styles.activeNav : ''}`} onClick={() => setActiveTab("profile")}>
+            <Users size={20} /> {t('tutorProfile') || 'Instructor Profile'}
           </button>
         </nav>
       </aside>
@@ -565,42 +610,216 @@ export default function TutorDashboard() {
       <main className={styles.mainContent}>
         <header className={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button className={styles.menuBtn} onClick={() => setSidebarOpen(true)}>
-              <Menu size={20} />
-            </button>
-            <h2 style={{ margin: 0 }}>{activeTab === 'dashboard' ? 'Studio Overview' : activeTab === 'courses' ? 'My Courses' : 'Instructor Profile'}</h2>
+            <button className={styles.menuBtn} onClick={() => setSidebarOpen(true)}><Menu size={20} /></button>
+            <h2 style={{ margin: 0 }}>
+              {activeTab === 'dashboard' ? (t('tutorStudio') || 'Studio Overview') : activeTab === 'courses' ? t('myCourses') : (t('tutorProfile') || 'Instructor Profile')}
+            </h2>
           </div>
-          <div className={styles.userProfile}>
-             <span style={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>{session?.user?.name}</span>
-            <img src={session?.user?.image || "https://ui-avatars.com/api/?name=" + session?.user?.name} alt="" className={styles.avatar} />
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ position: 'relative' }}>
+              <button
+                style={{ background: 'none', border: 'none', color: '#d1d5db', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px' }}
+                onClick={() => setShowLangMenu(l => !l)}
+              >
+                <span>{currentLangMeta.flag}</span>
+                <span>{lang.toUpperCase()}</span>
+                <ChevronDown size={12} />
+              </button>
+              {showLangMenu && (
+                <div className={styles.avatarDropdown} style={{ width: '150px', position: 'absolute', right: 0, top: '100%', marginTop: '10px' }}>
+                  {LANGUAGES.map(l => (
+                    <button key={l.code} className={styles.avatarDropdownItem} onClick={() => { setLang(l.code); setShowLangMenu(false); }}>
+                      <span>{l.flag}</span> {l.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.avatarDropdownWrapper} style={{ position: 'relative' }}>
+              <img 
+                src={session?.user?.image || "https://ui-avatars.com/api/?name=" + session?.user?.name} 
+                alt="" 
+                className={styles.avatar} 
+                onClick={() => setShowAvatarDropdown(!showAvatarDropdown)}
+                style={{ cursor: 'pointer', width: '32px', height: '32px', borderRadius: '50%' }}
+              />
+              {showAvatarDropdown && (
+                <div className={styles.avatarDropdown} style={{ position: 'absolute', right: 0, top: '100%', marginTop: '10px', width: '200px' }}>
+                  <div style={{ padding: '10px 16px', color: '#fff', fontSize: '14px', fontWeight: 600 }}>{session?.user?.name || "Tutor"}</div>
+                  <div style={{ height: '1px', background: '#374151', margin: '4px 0' }} />
+                  <Link href="/" className={styles.avatarDropdownItem} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', color: '#d1d5db' }}><Globe size={14} /> {t('backToMain') || 'Back to Main Site'}</Link>
+                  <button className={styles.avatarDropdownItem} onClick={() => signOut()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', color: '#f87171', width: '100%', border: 'none', background: 'none' }}><LogOut size={14} /> {t('signOut')}</button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
         <div className={styles.contentArea}>
-          {activeTab === 'dashboard' && stats && (
-            <div className={styles.dashboardGrid}>
-              <div className={styles.statCard}>
-                <div className={styles.statIcon} style={{ background: '#fef3c7', color: '#d97706' }}><DollarSign size={24} /></div>
-                <div>
-                  <p className={styles.statLabel}>Total Earnings</p>
-                  <h3 className={styles.statValue}>${stats.totalRevenue.toFixed(2)}</h3>
+          {activeTab === 'dashboard' && (
+            <>
+              {/* Course Filter Dropdown */}
+              <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ color: '#9ca3af', fontSize: '14px' }}>{t('analyze') || 'Analyze:'}:</span>
+                <select
+                  value={selectedStatsCourseId}
+                  onChange={(e) => setSelectedStatsCourseId(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                  style={{ background: '#1f2937', color: '#fff', border: '1px solid #374151', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
+                >
+                  <option value="all">{t('allCourses') || 'All Courses'}</option>
+                  {courses.map(c => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.dashboardGrid}>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon} style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}><DollarSign size={24} /></div>
+                  <div style={{ flex: 1 }}>
+                    <p className={styles.statLabel}>{t('totalEarnings') || 'Total Earnings'}</p>
+                    <h3 className={styles.statValue}>${(stats?.totalRevenue || 0).toFixed(2)}</h3>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon} style={{ background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4' }}><Users size={24} /></div>
+                  <div style={{ flex: 1 }}>
+                    <p className={styles.statLabel}>{t('enrolledStudents') || 'Enrolled Students'}</p>
+                    <h3 className={styles.statValue}>{stats?.totalStudents || 0}</h3>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon} style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}><PlayCircle size={24} /></div>
+                  <div style={{ flex: 1 }}>
+                    <p className={styles.statLabel}>{t('totalCourses') || 'Total Courses'}</p>
+                    <h3 className={styles.statValue}>{stats?.totalCourses || 0}</h3>
+                  </div>
                 </div>
               </div>
-              <div className={styles.statCard}>
-                <div className={styles.statIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}><Users size={24} /></div>
-                <div>
-                  <p className={styles.statLabel}>Enrolled Students</p>
-                  <h3 className={styles.statValue}>{stats.totalStudents}</h3>
+
+              <div className={styles.chartGrid}>
+                <div className={styles.chartCard}>
+                  <h3>{t('earningsOverTime') || 'Earnings Over Time (Last 7 Days)'}</h3>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>{t('earningsDesc') || 'Tracks your daily earnings from all published courses.'}</p>
+                  <div style={{ height: 300, width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={earningsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                             <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} itemStyle={{ color: '#e5e7eb' }} />
+                        <Area type="monotone" dataKey="earnings" stroke="#06b6d4" strokeWidth={3} fillOpacity={1} fill="url(#colorEarnings)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className={styles.chartCard}>
+                  <h3>{t('coursePerformance') || 'Course Performance'}</h3>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>{t('performanceDesc') || 'Compares course views vs actual completions to gauge overall difficulty.'}</p>
+                  <div style={{ height: 300, width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={coursePerformance} layout="vertical" margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
+                        <XAxis type="number" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis dataKey="name" type="category" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#374151" />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} cursor={{fill: '#1f2937'}} />
+                        <Bar dataKey="views" fill="#374151" radius={[0, 4, 4, 0]} barSize={12} />
+                        <Bar dataKey="completions" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={12} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '16px', fontSize: '12px', color: '#9ca3af' }}>
+                    <span style={{ display: 'flex', alignItems: 'center' }}><div style={{ width: 10, height: 10, background: '#374151', borderRadius: '2px', marginRight: 6 }}></div> {t('views')}</span>
+                    <span style={{ display: 'flex', alignItems: 'center' }}><div style={{ width: 10, height: 10, background: '#8b5cf6', borderRadius: '2px', marginRight: 6 }}></div> {t('completions')}</span>
+                  </div>
                 </div>
               </div>
-              <div className={styles.statCard}>
-                <div className={styles.statIcon} style={{ background: '#dcfce7', color: '#16a34a' }}><BookOpen size={24} /></div>
-                <div>
-                  <p className={styles.statLabel}>Published Courses</p>
-                  <h3 className={styles.statValue}>{stats.totalCourses}</h3>
+
+              {/* Second row of charts for Tutor */}
+              <div className={styles.chartGrid} style={{ marginTop: '24px' }}>
+                <div className={styles.chartCard}>
+                  <h3>{t('videoRetention') || 'Video Audience Retention (Avg)'}</h3>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>{t('retentionDesc') || 'Shows minute-by-minute viewer drop-off. Use this to spot boring or confusing segments.'}</p>
+                  <div style={{ height: 300, width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={retentionData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <XAxis dataKey="minute" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}%`} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#374151" />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} formatter={(value: number) => [`${value}%`, 'Retention']} />
+                        <Line type="monotone" dataKey="retention" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 0 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className={styles.chartCard}>
+                  <h3>{t('revenueBreakdown') || 'Revenue Breakdown'}</h3>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>{t('revenueDesc') || 'Percentage of total revenue generated by each of your courses.'}</p>
+                  <div style={{ height: 300, width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={revenueByCourseData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={5}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {revenueByCourseData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} formatter={(value: number) => `$${value}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
+                    {revenueByCourseData.map((entry, index) => (
+                      <div key={entry.name} style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: '#9ca3af' }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: COLORS[index], marginRight: 6 }}></div>
+                        {entry.name}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Third row of charts for Funnel */}
+              <div className={styles.chartGrid} style={{ marginTop: '24px', gridTemplateColumns: '1fr' }}>
+                <div className={styles.chartCard}>
+                  <h3>Course Completion Funnel</h3>
+                  <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>Detailed student drop-off rate across course modules. Identify exactly where students are abandoning your course.</p>
+                  <div style={{ height: 350, width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={funnelData} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
+                        <XAxis type="number" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis dataKey="step" type="category" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} width={120} />
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#374151" />
+                        <RechartsTooltip contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', borderRadius: '8px', color: '#fff' }} cursor={{fill: '#1f2937'}} />
+                        <Bar dataKey="students" radius={[0, 4, 4, 0]} barSize={24}>
+                          {funnelData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           {activeTab === 'courses' && (

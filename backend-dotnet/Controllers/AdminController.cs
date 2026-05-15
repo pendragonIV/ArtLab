@@ -40,6 +40,65 @@ namespace ArtLab.Backend.Controllers
             });
         }
 
+        [HttpGet("advanced-stats")]
+        public async Task<IActionResult> GetAdvancedStats()
+        {
+            var users = await _context.Users.ToListAsync();
+            var courses = await _context.Courses.ToListAsync();
+            var orders = await _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Course).Where(o => o.Status == "Completed").ToListAsync();
+            var lessonProgresses = await _context.LessonProgresses.ToListAsync();
+
+            var stats = new AdminAdvancedStats();
+
+            // Sales vs Payouts Data (Last 6 Months)
+            var salesData = new List<object>();
+            var today = DateTime.UtcNow.Date;
+            for (int i = 5; i >= 0; i--)
+            {
+                var targetMonth = new DateTime(today.Year, today.Month, 1).AddMonths(-i);
+                var monthOrders = orders.Where(o => o.CreatedAt.Year == targetMonth.Year && o.CreatedAt.Month == targetMonth.Month).ToList();
+                var rev = monthOrders.Sum(o => o.TotalAmount);
+                var payout = rev * 0.70m; // Example: 70% goes to tutor
+                salesData.Add(new { name = targetMonth.ToString("MMM"), revenue = rev, payout = payout });
+            }
+            stats.SalesData = salesData;
+
+            // User Growth & Retention (Last 6 Months)
+            var userGrowthData = new List<object>();
+            for (int i = 5; i >= 0; i--)
+            {
+                var targetMonth = new DateTime(today.Year, today.Month, 1).AddMonths(-i);
+                var newUsers = users.Count(u => u.CreatedAt.Year == targetMonth.Year && u.CreatedAt.Month == targetMonth.Month);
+                var activeUsersCount = lessonProgresses.Where(lp => lp.LastWatchedAt.Year == targetMonth.Year && lp.LastWatchedAt.Month == targetMonth.Month).Select(lp => lp.UserId).Distinct().Count();
+                userGrowthData.Add(new { month = targetMonth.ToString("MMM"), newUsers = newUsers, activeUsers = activeUsersCount });
+            }
+            stats.UserGrowthData = userGrowthData;
+
+            // Top Categories (Radar)
+            var categoryData = new List<object>();
+            var groupedCategories = courses.GroupBy(c => c.Category).OrderByDescending(g => g.Count()).Take(6).ToList();
+            var maxCourses = groupedCategories.Any() ? groupedCategories.Max(g => g.Count()) : 10;
+            var fullMark = maxCourses + (maxCourses / 2);
+            foreach (var g in groupedCategories)
+            {
+                var catName = g.Key.Length > 10 ? g.Key.Substring(0, 10) : g.Key;
+                categoryData.Add(new { subject = catName, A = g.Count(), fullMark = fullMark });
+            }
+            stats.CategoryData = categoryData;
+
+            // Source Data -> Actually we will use Sales By Category
+            var sourceDataList = new List<object>();
+            var allOrderItems = orders.SelectMany(o => o.OrderItems).ToList();
+            var groupedSales = allOrderItems.Where(oi => oi.Course != null).GroupBy(oi => oi.Course.Category);
+            foreach (var g in groupedSales)
+            {
+                sourceDataList.Add(new { name = g.Key, value = (double)g.Sum(oi => oi.PriceAtPurchase) });
+            }
+            stats.SourceData = sourceDataList;
+
+            return Ok(stats);
+        }
+
         // POST: api/admin/courses
         [HttpPost("courses")]
         public async Task<IActionResult> CreateCourse([FromBody] CourseDto dto)
