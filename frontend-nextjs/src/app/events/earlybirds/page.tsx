@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Clock, Zap, Star, ShoppingCart } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useLanguage } from '@/contexts/LanguageContext';
 import styles from './page.module.css';
 
 // Countdown hook
@@ -78,6 +79,7 @@ const EARLY_BIRDS = [
 ];
 
 function EarlyBirdCard({ course }: { course: typeof EARLY_BIRDS[0] }) {
+  const { t } = useLanguage();
   const time = useCountdown(course.releaseDate);
   const spotPct = Math.round(((course.totalSpots - course.spots) / course.totalSpots) * 100);
 
@@ -86,7 +88,7 @@ function EarlyBirdCard({ course }: { course: typeof EARLY_BIRDS[0] }) {
       <div className={styles.cardThumb}>
         <img src={course.thumbnail} alt={course.title} />
         <div className={styles.earlyTag}>
-          <Zap size={11} /> EARLY BIRD
+          <Zap size={11} /> {t('earlyBirdBadge')}
         </div>
         <div className={styles.savingsTag}>-{course.savings}%</div>
       </div>
@@ -98,7 +100,7 @@ function EarlyBirdCard({ course }: { course: typeof EARLY_BIRDS[0] }) {
 
         {/* Countdown */}
         <div className={styles.countdownBox}>
-          <div className={styles.countdownLabel}><Clock size={12} /> Releases in</div>
+          <div className={styles.countdownLabel}><Clock size={12} /> {t('earlyBirdReleasesIn')}</div>
           <div className={styles.countdownRow}>
             {[{ v: time.d, l: 'd' }, { v: time.h, l: 'h' }, { v: time.m, l: 'm' }, { v: time.s, l: 's' }].map(t => (
               <div key={t.l} className={styles.countdownUnit}>
@@ -114,7 +116,7 @@ function EarlyBirdCard({ course }: { course: typeof EARLY_BIRDS[0] }) {
           <div className={styles.spotsBar}>
             <div className={styles.spotsProgress} style={{ width: `${spotPct}%` }} />
           </div>
-          <span className={styles.spotsText}><strong>{course.spots}</strong> spots left</span>
+          <span className={styles.spotsText}><strong>{course.spots}</strong> {t('earlyBirdSpotsLeft')}</span>
         </div>
 
         {/* Price + CTA */}
@@ -124,7 +126,7 @@ function EarlyBirdCard({ course }: { course: typeof EARLY_BIRDS[0] }) {
             <span className={styles.regularPrice}>${course.regularPrice}</span>
           </div>
           <Link href={`/course/${course.id}`} className={styles.reserveBtn}>
-            <ShoppingCart size={14} /> Reserve Spot
+            <ShoppingCart size={14} /> {t('earlyBirdReserveSpot')}
           </Link>
         </div>
       </div>
@@ -133,6 +135,8 @@ function EarlyBirdCard({ course }: { course: typeof EARLY_BIRDS[0] }) {
 }
 
 export default function EarlyBirdsPage() {
+  const { t } = useLanguage();
+
   return (
     <>
       <Header />
@@ -143,31 +147,30 @@ export default function EarlyBirdsPage() {
           <div className={styles.heroBg} />
           <div className={styles.heroContent}>
             <div className={styles.heroPill}>
-              <Zap size={13} /> Early Bird Deals
+              <Zap size={13} /> {t('earlyBirdsDeals')}
             </div>
-            <h1 className={styles.heroTitle}>Get First Access —<br/>Before Everyone Else</h1>
+            <h1 className={styles.heroTitle}>{t('earlyBirdsHeroTitle1')}<br/>{t('earlyBirdsHeroTitle2')}</h1>
             <p className={styles.heroSub}>
-              Reserve upcoming courses at exclusive pre-launch prices. Once they release, the price goes up.
-              Limited spots available.
+              {t('earlyBirdsHeroSub')}
             </p>
             <div className={styles.heroStats}>
-              <div className={styles.heroStat}><strong>Save up to 55%</strong> vs. launch price</div>
+              <div className={styles.heroStat}><strong>{t('earlyBirdsSaveUpTo')}</strong> {t('earlyBirdsVsLaunch')}</div>
               <div className={styles.heroStatDivider} />
-              <div className={styles.heroStat}><strong>Limited spots</strong> per course</div>
+              <div className={styles.heroStat}><strong>{t('earlyBirdsLimitedSpots')}</strong> {t('earlyBirdsPerCourse')}</div>
               <div className={styles.heroStatDivider} />
-              <div className={styles.heroStat}><strong>Instant access</strong> on release day</div>
+              <div className={styles.heroStat}><strong>{t('earlyBirdsInstantAccess')}</strong> {t('earlyBirdsOnRelease')}</div>
             </div>
           </div>
         </div>
 
         {/* How it works */}
         <div className={styles.howItWorks}>
-          <div className={styles.howTitle}>How EarlyBirds Works</div>
+          <div className={styles.howTitle}>{t('earlyBirdsHowWorks')}</div>
           <div className={styles.howSteps}>
             {[
-              { num: '1', text: 'Find an upcoming course you love' },
-              { num: '2', text: 'Reserve your spot at Early Bird price' },
-              { num: '3', text: 'Get instant access when the course launches' },
+              { num: '1', text: t('earlyBirdsStep1') },
+              { num: '2', text: t('earlyBirdsStep2') },
+              { num: '3', text: t('earlyBirdsStep3') },
             ].map(s => (
               <div key={s.num} className={styles.howStep}>
                 <div className={styles.howNum}>{s.num}</div>

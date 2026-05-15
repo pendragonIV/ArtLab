@@ -1,5 +1,7 @@
+"use client";
 import Link from 'next/link';
 import styles from './CourseCard.module.css';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type CourseCardProps = {
   id: number;
@@ -21,6 +23,7 @@ function getDiscountPercent(price: number, original: number) {
 export default function CourseCard({
   id, title, author, price, originalPrice, thumbnailUrl, isNew, isTrending, category
 }: CourseCardProps) {
+  const { t } = useLanguage();
   const discount = getDiscountPercent(price, originalPrice);
 
   // Derive 1–2 tags from category
@@ -43,8 +46,8 @@ export default function CourseCard({
         {/* Badges */}
         {(isNew || isTrending) && (
           <div className={styles.badgesRow}>
-            {isTrending && <span className={styles.badgeTrending}>HOT</span>}
-            {isNew && <span className={styles.badgeNew}>NEW</span>}
+            {isTrending && <span className={styles.badgeTrending}>{t('badgeHot')}</span>}
+            {isNew && <span className={styles.badgeNew}>{t('badgeNew')}</span>}
           </div>
         )}
       </div>

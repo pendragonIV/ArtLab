@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import styles from "./page.module.css";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type SeriesCourse = {
   id: number;
@@ -29,6 +30,7 @@ type Series = {
 export default function SeriesPage() {
   const [seriesList, setSeriesList] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/series`)
@@ -55,11 +57,10 @@ export default function SeriesPage() {
         {/* HERO */}
         <div className={styles.hero}>
           <div className={styles.heroInner}>
-            <span className={styles.heroPill}>🎓 Bundle &amp; Save</span>
-            <h1 className={styles.heroTitle}>ArtLab Series</h1>
+            <span className={styles.heroPill}>{t('seriesHeroPill')}</span>
+            <h1 className={styles.heroTitle}>{t('seriesHeroTitle')}</h1>
             <p className={styles.heroSub}>
-              Master a complete pipeline. Bundled courses designed to take you
-              from beginner to professional — at a fraction of the price.
+              {t('seriesHeroSub')}
             </p>
           </div>
         </div>
@@ -67,7 +68,7 @@ export default function SeriesPage() {
         {/* SERIES LIST */}
         <div className={styles.listWrapper}>
           {seriesList.length === 0 ? (
-            <div className={styles.empty}>No series available yet.</div>
+            <div className={styles.empty}>{t('seriesNoSeries')}</div>
           ) : (
             seriesList.map((s) => (
               <div key={s.id} className={styles.seriesCard}>
@@ -80,7 +81,7 @@ export default function SeriesPage() {
                 {/* Right: info */}
                 <div className={styles.cardBody}>
                   <span className={styles.bundleTag}>
-                    {s.courseCount} COURSES BUNDLE
+                    {s.courseCount} {t('seriesBundle')}
                   </span>
                   <h2 className={styles.cardTitle}>{s.title}</h2>
                   <p className={styles.cardDesc}>{s.description}</p>
@@ -94,7 +95,7 @@ export default function SeriesPage() {
                       </div>
                     ))}
                     {s.courseCount > 3 && (
-                      <div className={styles.moreChip}>+{s.courseCount - 3} more</div>
+                      <div className={styles.moreChip}>+{s.courseCount - 3} {t('seriesMore')}</div>
                     )}
                   </div>
 
@@ -107,7 +108,7 @@ export default function SeriesPage() {
                       </span>
                     </div>
                     <Link href={`/series/${s.id}`} className={styles.viewBtn}>
-                      View Series →
+                      {t('seriesViewBtn')}
                     </Link>
                   </div>
                 </div>

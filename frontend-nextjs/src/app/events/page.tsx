@@ -6,67 +6,69 @@ import { Zap, Clock, Star, ArrowRight, Gift, Tag, Layers } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Tab = 'events' | 'curated' | 'benefits';
 
-const EVENTS = [
-  {
-    id: 1,
-    tag: 'HOT',
-    until: 'May 15th',
-    accentColor: '#facc15',
-    bg: 'linear-gradient(135deg, #1a1a0a 0%, #2d2800 100%)',
-    title: 'Seize the Golden Moment!\nGet up to 30% off',
-    desc: 'Limited-time offer — save big on 200+ premium art and design courses.',
-    cta: '/events/30-off',
-    ctaLabel: 'Shop Now →',
-    image: 'https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?q=80&w=800&auto=format',
-  },
-  {
-    id: 2,
-    tag: 'SERIES',
-    until: 'May 31st',
-    accentColor: '#818cf8',
-    bg: 'linear-gradient(135deg, #0d0d1f 0%, #1e1e3a 100%)',
-    title: 'All You Need in One Series\n— Up to 35% Off',
-    desc: 'Structured learning paths that take you from zero to expert. Massive bundles, one price.',
-    cta: '/series',
-    ctaLabel: 'Browse Series →',
-    image: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?q=80&w=800&auto=format',
-  },
-  {
-    id: 3,
-    tag: 'EVENT',
-    until: 'May 20th',
-    accentColor: '#34d399',
-    bg: 'linear-gradient(135deg, #071a10 0%, #0f2e1c 100%)',
-    title: 'Welcome Offer\n— 63% Off Your First Class',
-    desc: 'New to ArtLab? Get your first course at an unbeatable price. One-time offer for new members.',
-    cta: '/events/welcome',
-    ctaLabel: 'Claim Offer →',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format',
-  },
-];
-
-const CURATED = [
-  { icon: Star, label: 'Top 10 This Week', href: '/category/top', color: '#facc15', desc: 'The courses students love most right now' },
-  { icon: Zap, label: 'New Releases', href: '/category/new', color: '#818cf8', desc: 'Fresh content from our instructor team' },
-  { icon: Gift, label: 'Free Courses', href: '/events/free-learning', color: '#34d399', desc: 'Start learning at zero cost' },
-  { icon: Layers, label: 'Series Bundles', href: '/series', color: '#f97316', desc: 'Complete pipelines in one package' },
-  { icon: Tag, label: 'Flash Sales', href: '/events/30-off', color: '#f43f5e', desc: 'Limited-time deeply discounted classes' },
-];
-
-const BENEFITS = [
-  { title: '🎓 Lifetime Access', desc: 'Buy once, watch forever. All course materials including future updates.' },
-  { title: '📱 Learn Anywhere', desc: 'Mobile, tablet, or desktop — your courses go with you everywhere.' },
-  { title: '📄 Certificate', desc: 'Earn certificates of completion to showcase your skills.' },
-  { title: '💬 Community', desc: 'Join a community of creatives, get feedback, and grow together.' },
-  { title: '🔄 30-Day Refund', desc: 'Not satisfied? We offer a full refund within 30 days — no questions asked.' },
-  { title: '🌍 Multilingual', desc: 'Subtitles available in 8+ languages including English, Korean, and Japanese.' },
-];
-
 export default function EventsPage() {
   const [tab, setTab] = useState<Tab>('events');
+  const { t } = useLanguage();
+
+  const EVENTS = [
+    {
+      id: 1,
+      tag: 'HOT',
+      until: 'May 15th', // We might want to keep the date hardcoded or use a date formatter, let's keep it as is for now or translate "Until" in the UI.
+      accentColor: '#facc15',
+      bg: 'linear-gradient(135deg, #1a1a0a 0%, #2d2800 100%)',
+      title: t('eventsGoldenTitle'),
+      desc: t('eventsGoldenDesc'),
+      cta: '/events/30-off',
+      ctaLabel: t('eventsGoldenCta'),
+      image: 'https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?q=80&w=800&auto=format',
+    },
+    {
+      id: 2,
+      tag: 'SERIES',
+      until: 'May 31st',
+      accentColor: '#818cf8',
+      bg: 'linear-gradient(135deg, #0d0d1f 0%, #1e1e3a 100%)',
+      title: t('eventsSeriesTitle'),
+      desc: t('eventsSeriesDesc'),
+      cta: '/series',
+      ctaLabel: t('eventsSeriesCta'),
+      image: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?q=80&w=800&auto=format',
+    },
+    {
+      id: 3,
+      tag: 'EVENT',
+      until: 'May 20th',
+      accentColor: '#34d399',
+      bg: 'linear-gradient(135deg, #071a10 0%, #0f2e1c 100%)',
+      title: t('eventsWelcomeTitle'),
+      desc: t('eventsWelcomeDesc'),
+      cta: '/events/welcome',
+      ctaLabel: t('eventsWelcomeCta'),
+      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format',
+    },
+  ];
+
+  const CURATED = [
+    { icon: Star, label: t('curatedTop10'), href: '/category/top', color: '#facc15', desc: t('curatedTop10Desc') },
+    { icon: Zap, label: t('curatedNew'), href: '/category/new', color: '#818cf8', desc: t('curatedNewDesc') },
+    { icon: Gift, label: t('curatedFree'), href: '/events/free-learning', color: '#34d399', desc: t('curatedFreeDesc') },
+    { icon: Layers, label: t('curatedSeries'), href: '/series', color: '#f97316', desc: t('curatedSeriesDesc') },
+    { icon: Tag, label: t('curatedFlash'), href: '/events/30-off', color: '#f43f5e', desc: t('curatedFlashDesc') },
+  ];
+
+  const BENEFITS = [
+    { title: t('benefitLifetime'), desc: t('benefitLifetimeDesc') },
+    { title: t('benefitMobile'), desc: t('benefitMobileDesc') },
+    { title: t('benefitCert'), desc: t('benefitCertDesc') },
+    { title: t('benefitComm'), desc: t('benefitCommDesc') },
+    { title: t('benefitRefund'), desc: t('benefitRefundDesc') },
+    { title: t('benefitLang'), desc: t('benefitLangDesc') },
+  ];
 
   return (
     <>
@@ -77,16 +79,18 @@ export default function EventsPage() {
         <div className={styles.hero}>
           <div className={styles.heroBg} />
           <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>Tune In for Weekly<br/>Discounts & Events</h1>
-            <p className={styles.heroSub}>Exclusive deals, curated picks, and member benefits — updated every week.</p>
+            <h1 className={styles.heroTitle}>{t('eventsPageTitle').split('\n').map((line, i, arr) => (
+            <span key={i}>{line}{i < arr.length - 1 && <br/>}</span>
+          ))}</h1>
+          <p className={styles.heroSub}>{t('eventsPageSub')}</p>
           </div>
         </div>
 
         {/* ─── TABS ─────────────────────────────────────── */}
         <div className={styles.tabs}>
-          <button className={`${styles.tab} ${tab === 'events' ? styles.tabActive : ''}`} onClick={() => setTab('events')}>Events</button>
-          <button className={`${styles.tab} ${tab === 'curated' ? styles.tabActive : ''}`} onClick={() => setTab('curated')}>Curated Picks</button>
-          <button className={`${styles.tab} ${tab === 'benefits' ? styles.tabActive : ''}`} onClick={() => setTab('benefits')}>Member Benefits</button>
+          <button className={`${styles.tab} ${tab === 'events' ? styles.tabActive : ''}`} onClick={() => setTab('events')}>{t('eventsTab')}</button>
+          <button className={`${styles.tab} ${tab === 'curated' ? styles.tabActive : ''}`} onClick={() => setTab('curated')}>{t('curatedTab')}</button>
+          <button className={`${styles.tab} ${tab === 'benefits' ? styles.tabActive : ''}`} onClick={() => setTab('benefits')}>{t('benefitsTab')}</button>
         </div>
 
         <div className={styles.content}>
@@ -100,7 +104,7 @@ export default function EventsPage() {
                     <div className={styles.eventOverlay} />
                     <div className={styles.eventMeta}>
                       <span className={styles.eventTag} style={{ background: event.accentColor, color: '#000' }}>{event.tag}</span>
-                      <span className={styles.eventUntil}><Clock size={11} /> Until {event.until}</span>
+                      <span className={styles.eventUntil}><Clock size={11} /> {t('eventsUntil')} {event.until}</span>
                     </div>
                     <h2 className={styles.eventTitle}>
                       {event.title.split('\n').map((l, i) => <span key={i}>{l}{i === 0 && <br/>}</span>)}

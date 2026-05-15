@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { Trash2, Scissors } from "lucide-react";
 import styles from "./page.module.css";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type CartItem = {
   cartItemId: number;
@@ -24,6 +25,7 @@ type CartItem = {
 
 export default function CartPage() {
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<"VNPay" | "MoMo" | "BankTransfer">("VNPay");
@@ -74,7 +76,7 @@ export default function CartPage() {
       if (res.ok) {
         setItems(items.filter(item => item.cartItemId !== cartItemId));
       } else {
-        alert("Failed to remove item");
+        alert(t('cartRemove') + ': failed');
       }
     } catch (err) {
       console.error(err);
@@ -166,18 +168,18 @@ export default function CartPage() {
     <>
       <Header />
       <main className={styles.container}>
-        <h1 className={styles.title}>Shopping Cart</h1>
+        <h1 className={styles.title}>{t('cartTitle')}</h1>
 
         {status === "loading" || loading ? (
-          <div className={styles.message}>Loading your cart...</div>
+          <div className={styles.message}>{t('cartLoading')}</div>
         ) : status === "unauthenticated" ? (
           <div className={styles.message}>
-            <p>Please sign in to view your cart.</p>
+            <p>{t('cartSignInRequired')}</p>
           </div>
         ) : items.length === 0 ? (
           <div className={styles.message}>
-            <p>Your cart is empty.</p>
-            <Link href="/" className={styles.continueBtn}>Browse Courses</Link>
+            <p>{t('cartEmpty')}</p>
+            <Link href="/" className={styles.continueBtn}>{t('cartBrowseCourses')}</Link>
           </div>
         ) : (
           <div className={styles.cartGrid}>
@@ -192,7 +194,7 @@ export default function CartPage() {
                       </span>
                     )}
                     <h3 className={styles.itemTitle}>{item.title}</h3>
-                    <p className={styles.itemAuthor}>By {item.author}</p>
+                    <p className={styles.itemAuthor}>{t('cartBy')} {item.author}</p>
                     <div className={styles.itemPriceBox}>
                       <span className={styles.itemPrice}>${item.price.toFixed(2)}</span>
                       {!item.isChapterPurchase && (
@@ -208,13 +210,13 @@ export default function CartPage() {
             </div>
 
             <div className={styles.checkoutBox}>
-              <h2 className={styles.checkoutTitle}>Order Summary</h2>
+              <h2 className={styles.checkoutTitle}>{t('cartOrderSummary')}</h2>
               <div className={styles.summaryRow}>
-                <span>Original Price:</span>
+                <span>{t('cartOriginalPrice')}</span>
                 <span>${items.reduce((s, i) => s + i.originalPrice, 0).toFixed(2)}</span>
               </div>
               <div className={styles.summaryRow}>
-                <span>Discounts:</span>
+                <span>{t('cartDiscounts')}</span>
                 <span className={styles.discount}>
                   -${(items.reduce((s, i) => s + i.originalPrice, 0) - subtotalPrice).toFixed(2)}
                 </span>
@@ -225,7 +227,7 @@ export default function CartPage() {
                 <div className={styles.couponInputGroup}>
                   <input 
                     type="text" 
-                    placeholder="Discount Code" 
+                    placeholder={t('cartDiscountCode')} 
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     className={styles.couponInput}
@@ -235,36 +237,36 @@ export default function CartPage() {
                     disabled={applyingCoupon || !couponCode.trim()}
                     className={styles.couponBtn}
                   >
-                    Apply
+                    {t('cartApply')}
                   </button>
                 </div>
                 {couponError && <div className={styles.couponError}>{couponError}</div>}
                 {appliedCoupon && (
                   <div className={styles.couponSuccess}>
-                    Coupon applied! (-{appliedCoupon.discountPercent}%)
+                    {t('cartCouponApplied')} (-{appliedCoupon.discountPercent}%)
                     <button className={styles.removeCouponBtn} onClick={() => {
                       setAppliedCoupon(null);
                       setCouponCode("");
-                    }}>Remove</button>
+                    }}>{t('cartRemove')}</button>
                   </div>
                 )}
               </div>
 
               {appliedCoupon && (
                 <div className={styles.summaryRow}>
-                  <span>Coupon Discount:</span>
+                  <span>{t('cartCouponDiscount')}</span>
                   <span className={styles.discount}>-${discountAmount.toFixed(2)}</span>
                 </div>
               )}
 
               <div className={styles.divider}></div>
               <div className={styles.totalRow}>
-                <span>Total:</span>
+                <span>{t('cartTotal')}</span>
                 <span>${totalPrice.toFixed(2)}</span>
               </div>
               
               <div className={styles.paymentMethods}>
-                <h3 className={styles.paymentTitle}>Payment Method</h3>
+                <h3 className={styles.paymentTitle}>{t('cartPaymentMethod')}</h3>
                 <div 
                   className={`${styles.paymentOption} ${paymentMethod === "VNPay" ? styles.selected : ""}`}
                   onClick={() => setPaymentMethod("VNPay")}
@@ -292,7 +294,7 @@ export default function CartPage() {
                   <div className={styles.radioCircle}>
                     {paymentMethod === "BankTransfer" && <div className={styles.radioInner} />}
                   </div>
-                  <span>Bank Transfer</span>
+                  <span>{t('cartBankTransfer')}</span>
                 </div>
               </div>
 
@@ -302,7 +304,7 @@ export default function CartPage() {
                 disabled={loading || items.length === 0}
                 style={{ opacity: (loading || items.length === 0) ? 0.7 : 1 }}
               >
-                {loading ? "Processing..." : "Checkout"}
+                {loading ? t('cartProcessing') : t('cartCheckout')}
               </button>
             </div>
           </div>

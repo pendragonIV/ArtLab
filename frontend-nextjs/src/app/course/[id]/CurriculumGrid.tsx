@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Play, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Lesson = {
   id: number;
@@ -20,14 +21,15 @@ type Chapter = {
 };
 
 export default function CurriculumGrid({ chapters, courseId, isEnrolled }: { chapters: Chapter[], courseId: number, isEnrolled?: boolean }) {
-  if (!chapters || chapters.length === 0) return <p style={{ color: '#a1a1aa' }}>No curriculum available yet.</p>;
+  const { t } = useLanguage();
+  if (!chapters || chapters.length === 0) return <p style={{ color: '#a1a1aa' }}>{t('courseNoCurriculum')}</p>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', marginTop: '24px' }}>
       {chapters.map((chapter) => (
         <div key={chapter.id}>
           <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ color: '#6366f1', fontSize: '14px', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 12px', borderRadius: '99px' }}>Part {chapter.orderIndex}</span>
+            <span style={{ color: '#6366f1', fontSize: '14px', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 12px', borderRadius: '99px' }}>{t('coursePart')} {chapter.orderIndex}</span>
             {chapter.title}
           </h3>
           
@@ -46,11 +48,11 @@ export default function CurriculumGrid({ chapters, courseId, isEnrolled }: { cha
                 className="curriculumCard"
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: 600 }}>Lesson {lesson.orderIndex}</span>
+                  <span style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: 600 }}>{t('courseLesson')} {lesson.orderIndex}</span>
                   {lesson.isFreePreview ? (
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#000', background: '#4ade80', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>Preview</span>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#000', background: '#4ade80', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>{t('coursePreview')}</span>
                   ) : isEnrolled ? (
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#4f46e5', background: 'rgba(99,102,241,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>Enrolled</span>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#4f46e5', background: 'rgba(99,102,241,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>{t('courseEnrolled')}</span>
                   ) : (
                     <Lock size={14} color="#71717a" />
                   )}

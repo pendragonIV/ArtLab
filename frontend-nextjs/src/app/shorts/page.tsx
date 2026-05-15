@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Heart, MessageCircle, Share2, Play, ChevronUp, ChevronDown, Volume2, VolumeX, Bookmark } from 'lucide-react';
 import Header from '@/components/Header';
+import { useLanguage } from '@/contexts/LanguageContext';
 import styles from './page.module.css';
 
 // Mock data – will be replaced with real API
@@ -48,6 +49,7 @@ export default function ShortsPage() {
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [saved, setSaved] = useState<Set<number>>(new Set());
   const [muted, setMuted] = useState(true);
+  const { t } = useLanguage();
 
   const current = MOCK_SHORTS[currentIdx];
 
@@ -78,11 +80,10 @@ export default function ShortsPage() {
         {/* Left: info panel */}
         <div className={styles.infoPanel}>
           <div className={styles.infoPanelInner}>
-            <div className={styles.sectionEyebrow}>ArtLab Shorts</div>
-            <h1 className={styles.sectionTitle}>Bite-Sized Art Lessons</h1>
+            <div className={styles.sectionEyebrow}>ArtLab {t('shorts')}</div>
+            <h1 className={styles.sectionTitle}>{t('shortsTitle')}</h1>
             <p className={styles.sectionDesc}>
-              Quick, focused tips from our top instructors. Each short is a preview
-              from a full ArtLab course. Swipe through and discover your next class.
+              {t('shortsSub')}
             </p>
 
             <div className={styles.shortList}>
@@ -122,7 +123,7 @@ export default function ShortsPage() {
                 <h2 className={styles.videoTitle}>{current.title}</h2>
                 <p className={styles.videoAuthor}>{current.instructor}</p>
                 <Link href={`/course/${current.courseId}`} className={styles.goCourseBtn}>
-                  Go to Full Course →
+                  {t('shortsGoToCourse')}
                 </Link>
               </div>
 
@@ -172,11 +173,11 @@ export default function ShortsPage() {
                 onClick={() => toggleSave(current.id)}
               >
                 <Bookmark size={22} fill={saved.has(current.id) ? '#818cf8' : 'none'} />
-                <span>Save</span>
+                <span>{t('saveBtn')}</span>
               </button>
               <button className={styles.actionBtn}>
                 <Share2 size={22} />
-                <span>Share</span>
+                <span>{t('shareBtn')}</span>
               </button>
             </div>
           </div>
@@ -185,23 +186,23 @@ export default function ShortsPage() {
         {/* Right: related course card */}
         <div className={styles.coursePanel}>
           <div className={styles.coursePanelInner}>
-            <div className={styles.relatedLabel}>From this short</div>
+            <div className={styles.relatedLabel}>{t('shortsFromThis')}</div>
             <div className={styles.relatedCard}>
               <div className={styles.relatedThumb} style={{ background: current.gradient }} />
               <div className={styles.relatedInfo}>
                 <div className={styles.relatedCourse}>{current.courseName}</div>
                 <div className={styles.relatedInstructor}>{current.instructor}</div>
                 <Link href={`/course/${current.courseId}`} className={styles.relatedBtn}>
-                  View Course
+                  {t('viewCourse')}
                 </Link>
               </div>
             </div>
 
-            <div className={styles.relatedLabel} style={{ marginTop: 28 }}>Explore More</div>
+            <div className={styles.relatedLabel} style={{ marginTop: 28 }}>{t('shortsExploreMore')}</div>
             <div className={styles.exploreTags}>
-              {['Illustration', '3D Art', 'Concept Art', 'Animation', 'Game Design'].map(tag => (
+              {['Illustration', '3D Art', 'Concept Art', '2D Animation', 'Game Design'].map(tag => (
                 <Link key={tag} href={`/category/${tag.toLowerCase().replace(' ', '-')}`} className={styles.exploreTag}>
-                  {tag}
+                  {t(`cat${tag.replace(' ', '')}` as any) || tag}
                 </Link>
               ))}
             </div>

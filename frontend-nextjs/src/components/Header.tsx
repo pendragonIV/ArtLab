@@ -77,7 +77,7 @@ const CATEGORIES = [
 
 
 const NAV_PROMOS = [
-  { labelKey: 'promos30off',  label: '⚡ 30% OFF', href: '/events/30-off', highlight: true, badge: 'HOT' },
+  { labelKey: 'promos30off',  label: '⚡ 30% OFF', href: '/events/30-off', highlight: true, badgeKey: 'badgeHot' },
   { labelKey: 'series',      label: 'Series',    href: '/series', highlight: false },
   { labelKey: 'promos63off', label: '63% Off',   href: '/events/63-off', highlight: true },
   { labelKey: 'classcut',    label: 'Classcut',  href: '/classcut', highlight: false },
@@ -195,7 +195,7 @@ export default function Header() {
                 style={item.highlight ? { color: '#facc15' } : {}}
               >
                 {t(item.labelKey as any)}
-                {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
+                {item.badgeKey && <span className={styles.navBadge}>{t(item.badgeKey as any)}</span>}
               </Link>
             ))}
           </div>
@@ -440,16 +440,19 @@ export default function Header() {
                   <span style={{ color: CATEGORIES[activeCat].color }}>{t(CATEGORIES[activeCat].nameKey as any)}</span>
                 </div>
                 <div className={styles.megaSubGrid}>
-                  {CATEGORIES[activeCat].subs.map(sub => (
-                    <Link
-                      key={sub}
-                      href={`/category/${CATEGORIES[activeCat].name.toLowerCase().replace(/\s+/g, '-')}/${sub.toLowerCase().replace(/\s+/g, '-')}`}
-                      className={styles.megaSubItem}
-                      onClick={() => setShowMegaMenu(false)}
-                    >
-                      {sub}
-                    </Link>
-                  ))}
+                  {CATEGORIES[activeCat].subs.map(sub => {
+                    const subKey = `mega${sub.replace(/[^a-zA-Z0-9]/g, '')}`;
+                    return (
+                      <Link
+                        key={sub}
+                        href={`/category/${CATEGORIES[activeCat].name.toLowerCase().replace(/\s+/g, '-')}/${sub.toLowerCase().replace(/\s+/g, '-')}`}
+                        className={styles.megaSubItem}
+                        onClick={() => setShowMegaMenu(false)}
+                      >
+                        {t(subKey as any) || sub}
+                      </Link>
+                    );
+                  })}
                 </div>
                 {/* CTA at bottom of mega menu */}
                 <Link
@@ -473,7 +476,7 @@ export default function Header() {
               className={`${styles.navItem} ${item.highlight ? styles.navItemHighlight : ''}`}
             >
               {t(item.labelKey as any)}
-              {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
+              {item.badgeKey && <span className={styles.navBadge}>{t(item.badgeKey as any)}</span>}
             </Link>
           ))}
 

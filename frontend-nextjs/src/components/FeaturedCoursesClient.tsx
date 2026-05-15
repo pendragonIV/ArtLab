@@ -13,7 +13,7 @@ export default function FeaturedCoursesClient({ courses }: { courses: any[] }) {
     return (
       <section className={styles.section}>
         <div className={styles.emptyState}>
-          No courses available.
+          {t('categoryNoCourses')}
         </div>
       </section>
     );

@@ -95,17 +95,17 @@ export default function Hero() {
         <div className={styles.stats}>
           <div className={styles.statItem}>
             <span className={styles.statNumber}>200+</span>
-            <span className={styles.statLabel}>Courses</span>
+            <span className={styles.statLabel}>{t('courses')}</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statItem}>
             <span className={styles.statNumber}>50K+</span>
-            <span className={styles.statLabel}>Students</span>
+            <span className={styles.statLabel}>{t('students')}</span>
           </div>
           <div className={styles.statDivider} />
           <div className={styles.statItem}>
             <span className={styles.statNumber}>100+</span>
-            <span className={styles.statLabel}>Expert Instructors</span>
+            <span className={styles.statLabel}>{t('instructors')}</span>
           </div>
         </div>
 

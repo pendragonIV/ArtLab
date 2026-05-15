@@ -1,8 +1,12 @@
+"use client";
+
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import CourseCard from '@/components/CourseCard';
 import styles from './page.module.css';
 
-// Define the type for a course matching what the backend returns
 type Course = {
   id: number;
   title: string;
@@ -15,46 +19,46 @@ type Course = {
   isNew?: boolean;
 };
 
-// Next.js 14 server component dynamic route
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  // Wait for the slug parameter
-  const { slug } = await params;
-  
-  // Format slug for display (e.g. "3d-art" -> "3D Art", "concept-art" -> "Concept Art")
-  const formattedCategory = slug
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+export default function CategoryPage() {
+  const params = useParams();
+  const slug = params?.slug as string;
+  const { t } = useLanguage();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  let courses: Course[] = [];
-  try {
-    // Fetch courses filtered by category from our ASP.NET Core backend
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses?category=${slug}`, {
-      // In development, Next.js caches aggressively. We use revalidate 0 for live updates.
-      next: { revalidate: 0 }
-    });
-    
-    if (res.ok) {
-      courses = await res.json();
-    }
-  } catch (error) {
-    console.error("Failed to fetch courses for category:", error);
-  }
+  const formattedCategory = slug
+    ? slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+    : '';
+
+  useEffect(() => {
+    if (!slug) return;
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5149'}/api/courses?category=${slug}`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setCourses(data))
+      .catch(() => setCourses([]))
+      .finally(() => setLoading(false));
+  }, [slug]);
 
   return (
     <>
       <Header />
       <main className={styles.main}>
         <div className={styles.heroSection}>
-          <h1 className={styles.categoryTitle}>{formattedCategory} Classes</h1>
-          <p className={styles.categoryDesc}>Master {formattedCategory.toLowerCase()} from industry-leading professionals.</p>
+          <h1 className={styles.categoryTitle}>{formattedCategory} {t('categoryClasses')}</h1>
+          <p className={styles.categoryDesc}>
+            {t('categoryMasterFrom').replace('{cat}', formattedCategory.toLowerCase())}
+          </p>
         </div>
 
         <div className={styles.container}>
-          {courses.length > 0 ? (
+          {loading ? (
+            <div className={styles.emptyState}>
+              <p style={{ color: '#a1a1aa' }}>{t('loadingCourses')}</p>
+            </div>
+          ) : courses.length > 0 ? (
             <div className={styles.grid}>
               {courses.map((course) => (
-                <CourseCard 
+                <CourseCard
                   key={course.id}
                   id={course.id}
                   title={course.title}
@@ -69,8 +73,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             </div>
           ) : (
             <div className={styles.emptyState}>
-              <h2>No courses found</h2>
-              <p>We're working on adding new {formattedCategory.toLowerCase()} courses soon!</p>
+              <h2>{t('categoryNoCourses')}</h2>
+              <p>{t('categoryNoCoursesDesc').replace('{cat}', formattedCategory.toLowerCase())}</p>
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ import { Scissors, ShoppingCart, Check, Clock, Play, Info } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type Lesson = { id: number; title: string; durationSeconds: number };
 type Chapter = { id: number; title: string; orderIndex: number; price: number; lessons: Lesson[] };
@@ -23,6 +24,7 @@ type Course = {
 export default function ClasscutPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingCart, setAddingCart] = useState(false);
@@ -110,17 +112,16 @@ export default function ClasscutPage() {
               <Scissors size={14} />
               ArtLab Classcut
             </div>
-            <h1 className={styles.heroTitle}>Pay Only for What You Need</h1>
+            <h1 className={styles.heroTitle}>{t('classcutHeroTitle')}</h1>
             <p className={styles.heroSub}>
-              Classcut lets you buy individual chapters from full courses — perfect for learning
-              specific skills without committing to the entire program.
+              {t('classcutHeroSub')}
             </p>
             <div className={styles.heroStats}>
-              <div className={styles.heroStat}><strong>{courses.length}+</strong> Available Courses</div>
+              <div className={styles.heroStat}><strong>{courses.length}+</strong> {t('classcutAvailableCourses')}</div>
               <div className={styles.heroStatDivider} />
-              <div className={styles.heroStat}><strong>Save up to 80%</strong> vs. full price</div>
+              <div className={styles.heroStat}><strong>{t('classcutSaveUp')}</strong> {t('classcutVsFullPrice')}</div>
               <div className={styles.heroStatDivider} />
-              <div className={styles.heroStat}><strong>Instant</strong> access after purchase</div>
+              <div className={styles.heroStat}><strong>{t('classcutInstant')}</strong> {t('classcutAccessAfter')}</div>
             </div>
           </div>
         </div>
@@ -129,17 +130,17 @@ export default function ClasscutPage() {
         <div className={styles.howItWorks}>
           <div className={styles.howStep}>
             <div className={styles.howNum}>1</div>
-            <span>Choose a course below</span>
+            <span>{t('classcutStep1')}</span>
           </div>
           <div className={styles.howArrow}>→</div>
           <div className={styles.howStep}>
             <div className={styles.howNum}>2</div>
-            <span>Select the chapters you want</span>
+            <span>{t('classcutStep2')}</span>
           </div>
           <div className={styles.howArrow}>→</div>
           <div className={styles.howStep}>
             <div className={styles.howNum}>3</div>
-            <span>Add to cart & checkout</span>
+            <span>{t('classcutStep3')}</span>
           </div>
         </div>
 
@@ -148,9 +149,9 @@ export default function ClasscutPage() {
           {courses.length === 0 ? (
             <div className={styles.empty}>
               <Scissors size={40} strokeWidth={1} />
-              <h2>No Classcut Courses Available</h2>
-              <p>Check back soon — we're adding more content regularly.</p>
-              <Link href="/series" className={styles.emptyBtn}>Browse All Courses</Link>
+              <h2>{t('classcutEmpty')}</h2>
+              <p>{t('classcutEmptyDesc')}</p>
+              <Link href="/series" className={styles.emptyBtn}>{t('classcutBrowseAll')}</Link>
             </div>
           ) : (
             courses.map(course => {
@@ -172,14 +173,14 @@ export default function ClasscutPage() {
                       <h2 className={styles.cardTitle}>{course.title}</h2>
                       <p className={styles.cardAuthor}>{course.author}</p>
                       <div className={styles.cardMetaRow}>
-                        <span><Clock size={12} /> {totalLessons} lessons</span>
-                        <span>{course.chapters.length} chapters</span>
+                        <span><Clock size={12} /> {totalLessons} {t('classcutLessons')}</span>
+                        <span>{course.chapters.length} {t('classcutChapters')}</span>
                       </div>
                       <div className={styles.fullPriceLine}>
-                        Full course: <strong>${course.price.toFixed(2)}</strong>
+                        {t('classcutFullCourse')} <strong>${course.price.toFixed(2)}</strong>
                       </div>
                       <Link href={`/course/${course.id}`} className={styles.viewFullBtn}>
-                        View Full Course →
+                        {t('classcutViewFull')}
                       </Link>
                     </div>
                   </div>
@@ -187,20 +188,20 @@ export default function ClasscutPage() {
                   {/* Right panel: chapter selector */}
                   <div className={styles.cardRight}>
                     <div className={styles.chaptersHeader}>
-                      <h3 className={styles.chaptersTitle}>Select Chapters</h3>
+                      <h3 className={styles.chaptersTitle}>{t('classcutSelectChaptersTitle')}</h3>
                       {selectedIds.length > 0 && (
                         <button
                           className={styles.clearBtn}
                           onClick={() => setSelectedChapters(prev => ({ ...prev, [course.id]: [] }))}
                         >
-                          Clear all
+                          {t('classcutClearAll')}
                         </button>
                       )}
                     </div>
 
                     <div className={styles.chaptersList}>
                       {course.chapters.length === 0 ? (
-                        <p className={styles.noChapters}>No chapters available for Classcut.</p>
+                        <p className={styles.noChapters}>{t('classcutNoChapters')}</p>
                       ) : (
                         course.chapters.map(chapter => {
                           const isSelected = selectedIds.includes(chapter.id);
@@ -219,7 +220,7 @@ export default function ClasscutPage() {
                                   {chapter.title}
                                 </div>
                                 <div className={styles.chapterLessons}>
-                                  {chapter.lessons?.length || 0} lessons
+                                  {chapter.lessons?.length || 0} {t('classcutLessons')}
                                 </div>
                               </div>
                               <div className={styles.chapterPrice}>${chapter.price.toFixed(2)}</div>
@@ -234,12 +235,12 @@ export default function ClasscutPage() {
                       <div className={styles.footerLeft}>
                         {selectedIds.length > 0 ? (
                           <>
-                            <span className={styles.selectedCount}>{selectedIds.length} chapter{selectedIds.length > 1 ? 's' : ''} selected</span>
+                            <span className={styles.selectedCount}>{selectedIds.length} {t('classcutSelected')}</span>
                             <span className={styles.totalPrice}>${total.toFixed(2)}</span>
                           </>
                         ) : (
                           <span className={styles.footerHint}>
-                            <Info size={13} /> Select chapters above
+                            <Info size={13} /> {t('classcutSelectHint')}
                           </span>
                         )}
                       </div>
@@ -249,7 +250,7 @@ export default function ClasscutPage() {
                         onClick={() => handleAddToCart(course.id)}
                       >
                         <ShoppingCart size={15} />
-                        {addingCart ? 'Adding…' : `Add to Cart`}
+                        {addingCart ? t('classcutAdding') : t('classcutAddCart')}
                       </button>
                     </div>
                   </div>
