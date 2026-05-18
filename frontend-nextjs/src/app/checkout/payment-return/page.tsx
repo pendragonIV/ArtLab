@@ -66,9 +66,9 @@ function PaymentReturnContent() {
           {searchParams.get("method") === "bank" && (
             <div className={styles.bankInstructions}>
               <h3 className={styles.bankTitle}>Bank Transfer Details</h3>
-              <p className={styles.bankDesc}><strong>Bank:</strong> Vietcombank</p>
-              <p className={styles.bankDesc}><strong>Account Name:</strong> ARTLAB ACADEMY</p>
-              <p className={styles.bankDesc}><strong>Account Number:</strong> 1029384756</p>
+              <p className={styles.bankDesc}><strong>Bank:</strong> {process.env.NEXT_PUBLIC_BANK_NAME || "Vietcombank"}</p>
+              <p className={styles.bankDesc}><strong>Account Name:</strong> {process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || "ARTLAB ACADEMY"}</p>
+              <p className={styles.bankDesc}><strong>Account Number:</strong> {process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER || "—"}</p>
               <p className={`${styles.bankDesc} ${styles.highlight}`}><strong>Transfer Content:</strong> ARTLAB {searchParams.get("orderId")}</p>
             </div>
           )}
