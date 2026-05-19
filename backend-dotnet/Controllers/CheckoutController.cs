@@ -15,11 +15,16 @@ namespace ArtLab.Backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly ArtLab.Backend.Services.IExchangeRateService _exchangeRate;
 
-        public CheckoutController(AppDbContext context, IConfiguration config)
+        public CheckoutController(
+            AppDbContext context,
+            IConfiguration config,
+            ArtLab.Backend.Services.IExchangeRateService exchangeRate)
         {
             _context = context;
             _config = config;
+            _exchangeRate = exchangeRate;
         }
 
         private int GetUserId()
@@ -128,14 +133,15 @@ namespace ArtLab.Backend.Controllers
             }
         }
 
-        private string BuildPaymentUrl(Order order, string paymentMethod)
+        private async Task<string> BuildPaymentUrl(Order order, string paymentMethod)
         {
             var frontendUrl = GetFrontendUrl();
 
             if (paymentMethod == "VNPay")
             {
                 var vnpay = new VnPayLibrary();
-                var exchangeRate = _config.GetValue<decimal>("VNPay:UsdToVndRate", 25000m);
+                // Lấy tỉ giá real-time (cache 1h), fallback config nếu API lỗi
+                var exchangeRate = await _exchangeRate.GetUsdToVndRateAsync();
 
                 vnpay.AddRequestData("vnp_Version", "2.1.0");
                 vnpay.AddRequestData("vnp_Command", "pay");

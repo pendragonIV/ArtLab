@@ -15,12 +15,18 @@ namespace ArtLab.Backend.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
         private readonly ILogger<SepPayController> _logger;
+        private readonly ArtLab.Backend.Services.IExchangeRateService _exchangeRate;
 
-        public SepPayController(AppDbContext context, IConfiguration config, ILogger<SepPayController> logger)
+        public SepPayController(
+            AppDbContext context,
+            IConfiguration config,
+            ILogger<SepPayController> logger,
+            ArtLab.Backend.Services.IExchangeRateService exchangeRate)
         {
             _context = context;
             _config = config;
             _logger = logger;
+            _exchangeRate = exchangeRate;
         }
 
         private int? TryGetUserId()
@@ -49,9 +55,9 @@ namespace ArtLab.Backend.Controllers
             if (!cartItems.Any())
                 return BadRequest(new { message = "Giỏ hàng trống" });
 
-            // Tính tổng tiền
+            // Tính tổng tiền VND theo tỉ giá real-time
             decimal totalUsd = cartItems.Sum(c => c.Course!.Price);
-            var exchangeRate = _config.GetValue<decimal>("VNPay:UsdToVndRate", 25000m);
+            var exchangeRate = await _exchangeRate.GetUsdToVndRateAsync();
             long totalVnd = (long)Math.Round(totalUsd * exchangeRate);
 
             // Áp dụng coupon nếu có
@@ -208,7 +214,7 @@ namespace ArtLab.Backend.Controllers
             }
 
             // 6. Kiểm tra số tiền khớp (cho phép sai lệch ±1000 VND do làm tròn)
-            var exchangeRate = _config.GetValue<decimal>("VNPay:UsdToVndRate", 25000m);
+            var exchangeRate = await _exchangeRate.GetUsdToVndRateAsync();
             var expectedVnd = (long)Math.Round(order.TotalAmount * exchangeRate);
             var receivedVnd = (long)(payload.TransferAmount ?? 0);
 
@@ -249,6 +255,24 @@ namespace ArtLab.Backend.Controllers
 
             // SepPay yêu cầu response { "status": 1 } để biết đã nhận thành công
             return Ok(new { status = 1, message = "Payment confirmed", orderId = order.Id });
+        }
+
+        /// <summary>
+        /// GET /api/checkout/exchange-rate
+        /// Trả về tỉ giá USD/VND hiện tại (tự động lấy từ API, cache 1h).
+        /// Frontend có thể gọi để hiển thị "Tổng tiền bằng VND".
+        /// </summary>
+        [HttpGet("exchange-rate")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetExchangeRate()
+        {
+            var rate = await _exchangeRate.GetUsdToVndRateAsync();
+            return Ok(new
+            {
+                usdToVnd = rate,
+                updatedAt = DateTime.UtcNow.ToString("o"),
+                note = "Rate is cached for 1 hour. Source: Frankfurter / ExchangeRate-API."
+            });
         }
 
         // DTO cho QR order request

@@ -34,6 +34,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // VdoCipher Video service
 builder.Services.AddHttpClient<ArtLab.Backend.Services.VdoCipherService>();
 
+// Exchange Rate service — lấy tỉ giá USD/VND real-time, cache 1h
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient("ExchangeRate", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5); // timeout nhanh để không block checkout
+    client.DefaultRequestHeaders.Add("User-Agent", "ArtLab-Backend/1.0");
+});
+builder.Services.AddSingleton<ArtLab.Backend.Services.IExchangeRateService,
+    ArtLab.Backend.Services.ExchangeRateService>();
+
 // Background service: cleans up expired video sessions every 60s
 builder.Services.AddHostedService<ArtLab.Backend.Services.SessionCleanupService>();
 
